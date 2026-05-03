@@ -78,8 +78,18 @@ export default function App() {
       }));
     } catch (error: any) {
       console.error(error);
+      const statusCode = error.response?.status;
       const errorMessage = error.response?.data?.details || error.message || 'Erro desconhecido';
-      alert(`ERRO AO ENVIAR: ${errorMessage}\n\nMOTIVO PROVÁVEL: Você ainda não configurou o Apps Script (Macro) nos Secrets.\n\nSiga os passos no arquivo MACRO_INSTRUCTIONS.md (no menu de arquivos do projeto) para ajustar sua planilha.`);
+      
+      let finalMessage = `ERRO AO ENVIAR: ${errorMessage} (Status: ${statusCode})`;
+      
+      if (statusCode === 405 || statusCode === 404) {
+        finalMessage += `\n\nMOTIVO: Erro de rota no servidor. O Vercel pode demorar alguns minutos para propagar as mudanças nas APIs.`;
+      } else {
+        finalMessage += `\n\nIMPORTANTE: Verifique se você configurou a APPS_SCRIPT_URL nas 'Environment Variables' do seu painel do Vercel.`;
+      }
+      
+      alert(finalMessage);
     } finally {
       setIsSubmitting(false);
     }
