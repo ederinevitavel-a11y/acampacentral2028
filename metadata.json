@@ -1,6 +1,6 @@
 {
-  "name": "IBCIP",
-  "description": "Sistema de pesquisa e interesse para IBCIP (Acampa Central 2028).",
+  "name": "Acampa Central 2028",
+  "description": "Sistema de pesquisa e interesse para o Acampa Central 2028.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

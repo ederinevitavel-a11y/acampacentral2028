@@ -116,7 +116,7 @@ export default function App() {
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <div className="w-3 h-3 bg-black dark:bg-[#0A0A0B] transform rotate-45 border border-white/20"></div>
             </div>
-            <span className="font-black tracking-tighter text-xl uppercase">IBCIP</span>
+            <span className="font-black tracking-tighter text-base sm:text-xl uppercase">IBCIP</span>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 border-l border-white/10 pl-4 sm:pl-6 h-12">
@@ -127,19 +127,12 @@ export default function App() {
               </div>
               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
                 <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${stats.percentage}%` }}
-                  className="h-full bg-primary shadow-[0_0_10px_rgba(45,212,191,0.5)]"
+                   initial={{ width: 0 }}
+                   animate={{ width: `${stats.percentage}%` }}
+                   className="h-full bg-primary shadow-[0_0_10px_rgba(45,212,191,0.5)]"
                 />
               </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="hidden lg:flex gap-8 items-center font-bold text-[10px] text-slate-400 uppercase tracking-[0.2em]">
-          <div className="flex items-center gap-3 bg-white/5 px-5 py-2.5 rounded-full border border-white/10">
-            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-            <span className="text-[10px] text-white font-black whitespace-nowrap">Sincronizado com Sheets</span>
           </div>
         </div>
       </nav>
@@ -301,7 +294,11 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="px-6 md:px-12 py-10 flex flex-col md:flex-row justify-center items-center text-[9px] text-slate-600 uppercase tracking-[0.3em] font-bold gap-6 relative z-10 border-t border-white/5">
+      <footer className="px-6 md:px-12 py-10 flex flex-col items-center justify-center text-[9px] text-slate-600 uppercase tracking-[0.3em] font-bold gap-6 relative z-10 border-t border-white/5">
+        <div className="flex items-center gap-3 bg-white/5 px-5 py-2.5 rounded-full border border-white/10">
+          <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+          <span className="text-[10px] text-white font-black whitespace-nowrap">Sincronizado com Sheets</span>
+        </div>
         <span>© 2026 Major. Todos os direitos reservados.</span>
       </footer>
     </div>
