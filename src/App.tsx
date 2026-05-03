@@ -76,9 +76,10 @@ export default function App() {
         totalSim: isSim ? prev.totalSim + 1 : prev.totalSim,
         percentage: Math.min(Math.round(((isSim ? prev.totalSim + 1 : prev.totalSim) / GOAL) * 100), 100)
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Erro ao enviar inscrição. Tente novamente.');
+      const errorMessage = error.response?.data?.details || error.message || 'Erro desconhecido';
+      alert(`ERRO AO ENVIAR: ${errorMessage}\n\nMOTIVO PROVÁVEL: Você ainda não configurou o Apps Script (Macro) nos Secrets.\n\nSiga os passos no arquivo MACRO_INSTRUCTIONS.md (no menu de arquivos do projeto) para ajustar sua planilha.`);
     } finally {
       setIsSubmitting(false);
     }
