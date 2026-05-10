@@ -5,7 +5,7 @@ import { FormField, Input, Select, TextArea, cn } from './components/UI';
 import axios from 'axios';
 
 export default function App() {
-  const [stats, setStats] = useState({ totalSim: 0, percentage: 58, totalRegistrations: 142 }); // Iniciando com valores iniciais
+  const [stats, setStats] = useState({ totalSim: 0, totalRegistrations: 0, publicPercentage: 0, interestPercentage: 0 }); // Iniciando zerado
   const [daysLeft, setDaysLeft] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -19,7 +19,7 @@ export default function App() {
     suggestions: ''
   });
 
-  const GOAL = 200;
+  const GOAL = 150;
 
   React.useEffect(() => {
     const fetchStats = async () => {
@@ -31,7 +31,8 @@ export default function App() {
           setStats({
             totalSim: totalSim,
             totalRegistrations: totalReg,
-            percentage: Math.min(Math.round((totalSim / GOAL) * 100), 100)
+            interestPercentage: Math.min(Math.round((totalSim / GOAL) * 100), 100),
+            publicPercentage: Math.min(Math.round((totalReg / GOAL) * 100), 100)
           });
         }
       } catch (error) {
@@ -40,7 +41,7 @@ export default function App() {
     };
 
     const calculateDays = () => {
-      const targetDate = new Date('2026-05-10T00:00:00');
+      const targetDate = new Date('2026-05-17T23:59:59');
       const now = new Date();
       const diffTime = targetDate.getTime() - now.getTime();
       const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
@@ -70,12 +71,16 @@ export default function App() {
       
       // Update stats optimistically
       const isSim = formData.interest === 'Sim';
-      setStats(prev => ({
-        ...prev,
-        totalRegistrations: prev.totalRegistrations + 1,
-        totalSim: isSim ? prev.totalSim + 1 : prev.totalSim,
-        percentage: Math.min(Math.round(((isSim ? prev.totalSim + 1 : prev.totalSim) / GOAL) * 100), 100)
-      }));
+      setStats(prev => {
+        const newTotalSim = isSim ? prev.totalSim + 1 : prev.totalSim;
+        const newTotalReg = prev.totalRegistrations + 1;
+        return {
+          totalRegistrations: newTotalReg,
+          totalSim: newTotalSim,
+          interestPercentage: Math.min(Math.round((newTotalSim / GOAL) * 100), 100),
+          publicPercentage: Math.min(Math.round((newTotalReg / GOAL) * 100), 100)
+        };
+      });
     } catch (error: any) {
       console.error(error);
       const statusCode = error.response?.status;
@@ -121,26 +126,26 @@ export default function App() {
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary blur-[120px] rounded-full" />
       </div>
 
-      <nav className="flex justify-between items-center px-6 md:px-12 py-8 border-b border-white/5 relative z-10">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <div className="w-3 h-3 bg-black dark:bg-[#0A0A0B] transform rotate-45 border border-white/20"></div>
+      <nav className="flex justify-between items-center px-4 sm:px-6 md:px-12 py-6 sm:py-8 border-b border-white/5 relative z-10">
+        <div className="flex items-center gap-4 sm:gap-8 md:gap-12">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center">
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-black dark:bg-[#0A0A0B] transform rotate-45 border border-white/20"></div>
             </div>
-            <span className="font-black tracking-tighter text-base sm:text-xl uppercase">IBCIP</span>
+            <span className="font-black tracking-tighter text-sm sm:text-base md:text-xl uppercase">IBCIP</span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4 border-l border-white/10 pl-4 sm:pl-6 h-12">
-            <div className="flex flex-col gap-2 w-40 sm:w-56 md:w-72">
+          <div className="flex items-center gap-4 border-l border-white/10 pl-4 sm:pl-8 h-10">
+            <div className="flex flex-col gap-1.5 w-24 sm:w-48 md:w-72">
               <div className="flex justify-between items-end">
-                <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase font-black tracking-widest leading-none">Meta de Interesse</span>
-                <span className="text-[13px] sm:text-[14px] text-primary font-black leading-none">{stats.percentage}%</span>
+                <span className="text-[9px] sm:text-[11px] text-slate-400 uppercase font-bold tracking-widest leading-none">Meta Interesse</span>
+                <span className="text-[12px] sm:text-[15px] text-primary font-black leading-none">{stats.interestPercentage}%</span>
               </div>
               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
                 <motion.div 
                    initial={{ width: 0 }}
-                   animate={{ width: `${stats.percentage}%` }}
-                   className="h-full bg-primary shadow-[0_0_10px_rgba(45,212,191,0.5)]"
+                   animate={{ width: `${stats.interestPercentage}%` }}
+                   className="h-full bg-primary shadow-[0_0_12px_rgba(45,212,191,0.6)]"
                 />
               </div>
             </div>
@@ -148,37 +153,37 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="flex-1 flex flex-col lg:flex-row px-6 md:px-12 gap-12 items-center py-12 relative z-10 max-w-7xl mx-auto w-full">
+      <main className="flex-1 flex flex-col lg:flex-row px-4 sm:px-6 md:px-12 gap-8 lg:gap-12 items-center py-8 md:py-12 relative z-10 max-w-7xl mx-auto w-full">
         {/* Left Content: Hero Typography */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center text-center lg:text-left -translate-y-8">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center text-center lg:text-left pt-4 lg:pt-0 lg:-translate-y-8">
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-[48px] sm:text-[64px] md:text-[94px] lg:text-[124px] leading-[0.95] font-black tracking-tighter mb-10"
+            className="text-[42px] sm:text-[64px] md:text-[94px] lg:text-[124px] leading-[1] md:leading-[0.95] font-black tracking-tighter mb-6 md:mb-10"
           >
             ACAMPA<br/>
             <span className="stroke-text uppercase">Central</span>
             2028
           </motion.h1>
 
-          <div className="flex flex-wrap justify-center lg:justify-start gap-12 mt-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-              <p className="text-4xl md:text-5xl font-black">{stats.totalRegistrations}</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mt-2 font-bold">Inscritos</p>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center lg:justify-start gap-6 sm:gap-10 md:gap-16 mt-4 px-2 sm:px-0">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-col items-center lg:items-start">
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black">{stats.totalRegistrations}</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-[0.2em] mt-1 sm:mt-2 font-bold">Inscritos</p>
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-              <p className="text-4xl md:text-5xl font-black">{daysLeft}</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mt-2 font-bold whitespace-nowrap">Dias para o fim</p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="flex flex-col items-center lg:items-start">
+              <p className="text-3xl sm:text-4xl md:text-5xl font-black">{daysLeft}</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-[0.2em] mt-1 sm:mt-2 font-bold whitespace-nowrap">Dias para o fim</p>
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-              <p className="text-4xl md:text-5xl font-black text-primary">{stats.percentage}%</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mt-2 font-bold">Meta de público</p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex flex-col items-center lg:items-start col-span-2 sm:col-span-1 border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0 w-full sm:w-auto">
+              <p className="text-5xl sm:text-6xl md:text-7xl font-black text-primary drop-shadow-[0_0_15px_rgba(45,212,191,0.3)]">{stats.publicPercentage}%</p>
+              <p className="text-[10px] sm:text-[12px] text-slate-400 uppercase tracking-[0.2em] mt-1 sm:mt-2 font-bold">Meta de público</p>
             </motion.div>
           </div>
         </div>
 
         {/* Right Content: Modern Form Card */}
-        <div className="w-full lg:w-1/2 relative">
+        <div className="w-full lg:w-1/2 relative pb-8">
           <AnimatePresence mode="wait">
             {!submitted ? (
               <motion.div
@@ -186,16 +191,16 @@ export default function App() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.05 }}
-                className="bg-white/[0.03] border border-white/10 rounded-[3rem] p-8 md:p-12 backdrop-blur-xl shadow-2xl relative overflow-hidden"
+                className="bg-white/[0.03] border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-8 md:p-12 backdrop-blur-xl shadow-2xl relative overflow-hidden"
               >
-                <div className="flex justify-between items-start mb-12">
+                <div className="flex justify-between items-start mb-8 md:mb-12">
                   <div>
-                    <h2 className="text-3xl font-black tracking-tight">Formulário de Interesse</h2>
-                    <p className="text-slate-500 text-sm mt-2">Respostas registradas em tempo real.</p>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase">Formulário de Interesse</h2>
+                    <p className="text-slate-500 text-xs sm:text-sm mt-1 sm:mt-2">Respostas registradas em tempo real.</p>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                   <FormField label="👤 Nome completo" id="name">
                     <Input 
                       id="name" name="name" placeholder="Gustavo Santos Silva" 

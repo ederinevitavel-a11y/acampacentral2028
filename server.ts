@@ -21,13 +21,32 @@ async function startServer() {
       
       if (csvUrl) {
         const response = await axios.get(csvUrl);
-        const rows = response.data.split('\n').filter((r: string) => r.trim());
-        const totalRegistrations = Math.max(0, rows.length - 1);
+        const rows = response.data.split(/\r?\n/).filter((r: string) => r.trim());
+        
+        let validCount = 0;
         let totalSim = 0;
-        rows.slice(1).forEach((row: string) => {
-          if (row.toLowerCase().includes('sim')) totalSim++;
+
+        for (let i = 1; i < rows.length; i++) {
+          const columns = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+          let fullName = columns[1] ? columns[1].replace(/"/g, '').trim() : '';
+          
+          const isHeader = fullName.toLowerCase() === 'nome completo' || 
+                           fullName.toLowerCase() === 'nome' ||
+                           fullName.toLowerCase().includes('completo');
+
+          if (fullName.length >= 4 && !isHeader) {
+            validCount++;
+            if (rows[i].toLowerCase().includes('sim')) {
+              totalSim++;
+            }
+          }
+        }
+
+        return res.json({ 
+          totalSim, 
+          totalRegistrations: validCount, 
+          source: 'public_csv' 
         });
-        return res.json({ totalSim, totalRegistrations, source: 'public_csv' });
       }
 
       if (appsScriptUrl) {
@@ -35,7 +54,7 @@ async function startServer() {
         return res.json(response.data);
       } 
       
-      res.json({ totalSim: 116, totalRegistrations: 142, source: 'fallback' });
+      res.json({ totalSim: 0, totalRegistrations: 0, source: 'no_config' });
     } catch (error) {
       console.error("Erro ao carregar estatísticas:", error);
       res.json({ totalSim: 0, totalRegistrations: 0, error: 'Erro ao ler dados' });

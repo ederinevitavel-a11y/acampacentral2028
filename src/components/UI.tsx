@@ -24,7 +24,7 @@ export function FormField({ label, id, error, children, className }: FormFieldPr
     >
       <label 
         htmlFor={id} 
-        className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 mb-1"
+        className="text-[15px] font-bold text-slate-200 mb-1"
       >
         {label}
       </label>
@@ -73,20 +73,25 @@ interface SelectProps extends React.ComponentPropsWithoutRef<'select'> {
 
 export function Select({ className, options, ...props }: SelectProps) {
   return (
-    <select
-      className={cn(
-        "flex h-14 w-full rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-white focus-visible:outline-none focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 appearance-none",
-        className
-      )}
-      {...props}
-    >
-      <option value="" disabled className="bg-slate-900">Selecione uma opção</option>
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
-          {opt.label}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        className={cn(
+          "flex h-14 w-full rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-white focus-visible:outline-none focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 appearance-none",
+          className
+        )}
+        {...props}
+      >
+        <option value="" disabled className="bg-slate-900">Selecione uma opção</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </div>
   );
 }
 
