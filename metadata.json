@@ -1,6 +1,6 @@
 {
-  "name": "Acampa Central 2028",
-  "description": "Sistema de pesquisa e interesse para o Acampa Central 2028.",
+  "name": "Comunhão! - Boletim Digital da Igreja",
+  "description": "Boletim Informativo Digital Comunhão! para a IBCIP com avisos, programação dos cultos, mensagem pastoral e cartazes em alta definição.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
