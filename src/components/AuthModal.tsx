@@ -48,6 +48,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
+  const loginSuccess = (user: AuthorizedUser) => {
+    setSuccessUser(user);
+    setTimeout(() => {
+      onSuccessLogin(user);
+      onClose();
+      setSuccessUser(null);
+      setErrorMessage('');
+    }, 900);
+  };
+
   // Login with Google through Firebase Authentication
   const handleFirebaseGoogleLogin = async () => {
     setErrorMessage('');
@@ -55,23 +65,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       const user = await loginWithGoogleFirebase();
-      setSuccessUser(user);
+      loginSuccess(user);
       setIsLoading(false);
-
-      setTimeout(() => {
-        onSuccessLogin(user);
-        onClose();
-        setSuccessUser(null);
-      }, 1000);
     } catch (err: any) {
       setIsLoading(false);
       console.error('Erro no login Firebase Google:', err);
       
-      if (err.code === 'auth/popup-closed-by-user') {
+      const errorCode = err?.code || '';
+      const errorMsg = err?.message || '';
+
+      if (errorCode === 'auth/unauthorized-domain' || errorMsg.includes('unauthorized-domain')) {
+        setErrorMessage(
+          'Domínio não autorizado no Firebase Console. Adicione o domínio desta aplicação em: Firebase Console > Authentication > Settings > Authorized domains.'
+        );
+      } else if (errorCode === 'auth/popup-closed-by-user') {
         setErrorMessage('A janela de login com o Google foi fechada antes da conclusão.');
-      } else if (err.code === 'auth/popup-blocked') {
-        setErrorMessage('O navegador bloqueou o pop-up do Google. Por favor, permita pop-ups para fazer login.');
-      } else if (err.code === 'auth/cancelled-popup-request') {
+      } else if (errorCode === 'auth/popup-blocked') {
+        setErrorMessage('O navegador bloqueou o pop-up do Google. Por favor, autorize pop-ups para esta página.');
+      } else if (errorCode === 'auth/cancelled-popup-request') {
         // user clicked again
       } else {
         setErrorMessage(
@@ -85,21 +96,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-800 text-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden animate-fadeIn">
         
-        {/* Ambient Subtle Glow */}
+        {/* Subtle Accent Glow */}
         <div className="absolute -top-20 -right-20 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner">
+          <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner text-amber-400">
             <GoogleIcon className="w-6 h-6" />
           </div>
           <div>
@@ -122,8 +133,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-bold text-white">Administrador Conectado!</h4>
-              <p className="text-xs text-emerald-300 font-mono font-bold">{successUser.email}</p>
+              <h4 className="text-base font-bold text-white">Autenticado com Sucesso!</h4>
+              <p className="text-xs text-emerald-300 font-mono font-bold">{successUser.name} ({successUser.email})</p>
             </div>
             <div className="inline-flex items-center gap-2 text-xs text-slate-400">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
@@ -133,7 +144,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         ) : (
           <div className="space-y-5">
             
-            {/* Info Badge */}
+            {/* Info Box */}
             <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex items-start gap-3">
               <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -145,31 +156,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {errorMessage && (
               <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs flex items-start gap-2.5 animate-fadeIn">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
-                <span className="leading-relaxed">{errorMessage}</span>
+                <span className="leading-relaxed block">{errorMessage}</span>
               </div>
             )}
 
             {/* Google Firebase Login Button */}
-            <div className="space-y-3">
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={handleFirebaseGoogleLogin}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin text-slate-700" />
-                    <span>Conectando ao Google...</span>
-                  </>
-                ) : (
-                  <>
-                    <GoogleIcon className="w-5 h-5" />
-                    <span>Entrar com Google (Firebase)</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={handleFirebaseGoogleLogin}
+              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin text-slate-700" />
+                  <span>Conectando ao Google...</span>
+                </>
+              ) : (
+                <>
+                  <GoogleIcon className="w-5 h-5" />
+                  <span>Entrar com Google (Firebase)</span>
+                </>
+              )}
+            </button>
 
             {/* Cancel Footer */}
             <div className="pt-1">
