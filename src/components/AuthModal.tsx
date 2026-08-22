@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { X, AlertCircle, CheckCircle2, Lock, ArrowRight, RefreshCw, ShieldCheck } from 'lucide-react';
+import {
+  X,
+  AlertCircle,
+  CheckCircle2,
+  Lock,
+  RefreshCw,
+} from 'lucide-react';
 import { AuthorizedUser } from '../types';
-import { AUTHORIZED_GOOGLE_EMAILS, INITIAL_AUTHORIZED_USERS } from '../data/mockData';
+import { loginWithGoogleFirebase } from '../services/firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,61 +42,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onSuccessLogin,
 }) => {
-  const [googleEmail, setGoogleEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successUser, setSuccessUser] = useState<AuthorizedUser | null>(null);
 
   if (!isOpen) return null;
 
-  const handleAuthorizeEmail = (emailToVerify: string) => {
+  // Login with Google through Firebase Authentication
+  const handleFirebaseGoogleLogin = async () => {
     setErrorMessage('');
     setIsLoading(true);
 
-    const formattedEmail = emailToVerify.trim().toLowerCase();
-
-    // Check if the email exists in the server-configured whitelist
-    const isAuthorized = AUTHORIZED_GOOGLE_EMAILS.some(
-      (authorized) => authorized.trim().toLowerCase() === formattedEmail
-    );
-
-    setTimeout(() => {
+    try {
+      const user = await loginWithGoogleFirebase();
+      setSuccessUser(user);
       setIsLoading(false);
-      if (isAuthorized) {
-        const authorizedObj: AuthorizedUser = INITIAL_AUTHORIZED_USERS.find(
-          (u) => u.email.toLowerCase() === formattedEmail
-        ) || {
-          id: `user-${Date.now()}`,
-          email: formattedEmail,
-          name: formattedEmail.split('@')[0],
-          role: 'Administrador',
-          addedAt: new Date().toISOString().split('T')[0],
-        };
 
-        setSuccessUser(authorizedObj);
-        setTimeout(() => {
-          onSuccessLogin(authorizedObj);
-          onClose();
-          setSuccessUser(null);
-          setGoogleEmail('');
-        }, 900);
+      setTimeout(() => {
+        onSuccessLogin(user);
+        onClose();
+        setSuccessUser(null);
+      }, 1000);
+    } catch (err: any) {
+      setIsLoading(false);
+      console.error('Erro no login Firebase Google:', err);
+      
+      if (err.code === 'auth/popup-closed-by-user') {
+        setErrorMessage('A janela de login com o Google foi fechada antes da conclusão.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setErrorMessage('O navegador bloqueou o pop-up do Google. Por favor, permita pop-ups para fazer login.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // user clicked again
       } else {
         setErrorMessage(
-          `Acesso não autorizado para "${emailToVerify}". Apenas contas Google autorizadas pela administração da IBCIP têm permissão de acesso.`
+          err.message || 'Falha ao autenticar com o Google via Firebase.'
         );
       }
-    }, 600);
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!googleEmail.trim()) return;
-    handleAuthorizeEmail(googleEmail);
-  };
-
-  // Quick 1-click Google Sign-in for current manager (admissclick@gmail.com)
-  const handleQuickGoogleSignIn = () => {
-    handleAuthorizeEmail('admissclick@gmail.com');
+    }
   };
 
   return (
@@ -118,11 +106,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="flex items-center gap-2">
               <h3 className="text-xl font-black text-white">Login com Google</h3>
               <span className="text-[10px] font-black px-2 py-0.5 rounded bg-amber-500 text-slate-950">
-                IBCIP
+                Firebase
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Painel Gestor do Boletim Comunhão!
+              Painel Gestor do Boletim IBCIP
             </p>
           </div>
         </div>
@@ -134,12 +122,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-bold text-white">Conta Google Autorizada!</h4>
-              <p className="text-xs text-emerald-300 font-mono">{successUser.email}</p>
+              <h4 className="text-base font-bold text-white">Administrador Conectado!</h4>
+              <p className="text-xs text-emerald-300 font-mono font-bold">{successUser.email}</p>
             </div>
             <div className="inline-flex items-center gap-2 text-xs text-slate-400">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-              <span>Abrindo o Painel Gestor...</span>
+              <span>Abrindo Painel Gestor...</span>
             </div>
           </div>
         ) : (
@@ -149,7 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex items-start gap-3">
               <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <p className="text-xs text-slate-300 leading-relaxed">
-                O acesso ao painel de edição do <strong className="text-white">Comunhão!</strong> é restrito a e-mails Google autorizados.
+                Autentique-se com sua conta Google pelo <strong className="text-white">Firebase Auth</strong>. Apenas contas da liderança têm permissão para editar o boletim.
               </p>
             </div>
 
@@ -161,69 +149,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             )}
 
-            {/* Fast Google Login Button */}
+            {/* Google Firebase Login Button */}
             <div className="space-y-3">
               <button
                 type="button"
                 disabled={isLoading}
-                onClick={handleQuickGoogleSignIn}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-[0.99] disabled:opacity-50"
+                onClick={handleFirebaseGoogleLogin}
+                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
               >
-                <GoogleIcon className="w-5 h-5" />
-                <span>Continuar com Google</span>
-                <ArrowRight className="w-4 h-4 text-slate-500 ml-auto" />
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin text-slate-700" />
+                    <span>Conectando ao Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon className="w-5 h-5" />
+                    <span>Entrar com Google (Firebase)</span>
+                  </>
+                )}
               </button>
-
-              <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-slate-800"></div>
-                <span className="flex-shrink mx-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  ou digite o e-mail Google
-                </span>
-                <div className="flex-grow border-t border-slate-800"></div>
-              </div>
-
-              {/* Email Verification Form */}
-              <form onSubmit={handleFormSubmit} className="space-y-3">
-                <div className="relative">
-                  <GoogleIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    required
-                    value={googleEmail}
-                    onChange={(e) => setGoogleEmail(e.target.value)}
-                    placeholder="seu.email@gmail.com"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || !googleEmail.trim()}
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black rounded-xl text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Validando autorização...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>Entrar no Painel Gestor</span>
-                    </>
-                  )}
-                </button>
-              </form>
             </div>
 
             {/* Cancel Footer */}
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2 text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors"
+                className="w-full py-2 text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors cursor-pointer"
               >
-                Voltar à visualização do boletim
+                Voltar ao boletim
               </button>
             </div>
 

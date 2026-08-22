@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "Bulletin": {
+      "collection": "bulletins",
+      "fields": {
+        "id": { "type": "string" },
+        "editionNumber": { "type": "string" },
+        "weekRange": { "type": "string" },
+        "themeVerse": { "type": "string" },
+        "themeVerseRef": { "type": "string" },
+        "status": { "type": "string" },
+        "publishedAt": { "type": "string" },
+        "churchName": { "type": "string" },
+        "churchAddress": { "type": "string" },
+        "events": { "type": "array" },
+        "pastoral": { "type": "map" },
+        "notices": { "type": "array" }
+      }
+    }
+  }
+}

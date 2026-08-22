@@ -194,9 +194,11 @@ export const INITIAL_BULLETIN: WeeklyBulletin = {
   ],
 };
 
-// Whitelist of authorized Google accounts for Comunhão! (IBCIP)
+// Whitelist of authorized accounts for Comunhão! (IBCIP)
 export const AUTHORIZED_GOOGLE_EMAILS: string[] = [
   'admissclick@gmail.com',
+  'elaine.rsn@hotmail.com',
+  'rafa-cnunes@hotmail.com',
 ];
 
 export const INITIAL_AUTHORIZED_USERS: AuthorizedUser[] = [
@@ -206,6 +208,20 @@ export const INITIAL_AUTHORIZED_USERS: AuthorizedUser[] = [
     name: 'Gestor IBCIP',
     role: 'Administrador',
     addedAt: '2026-08-21',
+  },
+  {
+    id: 'user-2',
+    email: 'elaine.rsn@hotmail.com',
+    name: 'Elaine RSN',
+    role: 'Administrador',
+    addedAt: '2026-08-22',
+  },
+  {
+    id: 'user-3',
+    email: 'rafa-cnunes@hotmail.com',
+    name: 'Rafa C. Nunes',
+    role: 'Administrador',
+    addedAt: '2026-08-22',
   },
 ];
 
