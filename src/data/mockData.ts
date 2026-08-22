@@ -205,7 +205,7 @@ export const INITIAL_AUTHORIZED_USERS: AuthorizedUser[] = [
   {
     id: 'user-1',
     email: 'admissclick@gmail.com',
-    name: 'Gestor IBCIP',
+    name: 'Admin IBCIP',
     role: 'Administrador',
     addedAt: '2026-08-21',
   },

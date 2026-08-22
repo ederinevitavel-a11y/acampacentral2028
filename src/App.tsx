@@ -32,8 +32,21 @@ export default function App() {
 
   // View state
   const [viewMode, setViewMode] = useState<'public' | 'admin'>('public');
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
-  const [authenticatedUser, setAuthenticatedUser] = useState<AuthorizedUser | null>(null);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ibcip_admin_session');
+    return !!saved;
+  });
+  const [authenticatedUser, setAuthenticatedUser] = useState<AuthorizedUser | null>(() => {
+    const saved = localStorage.getItem('ibcip_admin_session');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
   // Modals state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -59,19 +72,14 @@ export default function App() {
       if (user) {
         setIsAdminAuthenticated(true);
         setAuthenticatedUser(user);
-      } else {
-        setIsAdminAuthenticated(false);
-        setAuthenticatedUser(null);
-        if (viewMode === 'admin') {
-          setViewMode('public');
-        }
+        localStorage.setItem('ibcip_admin_session', JSON.stringify(user));
       }
     });
 
     return () => {
       unsubscribeAuth();
     };
-  }, [viewMode]);
+  }, []);
 
   // Handle bulletin updates (local state + Firestore push)
   const handleUpdateBulletin = (updated: WeeklyBulletin | ((prev: WeeklyBulletin) => WeeklyBulletin)) => {
@@ -101,6 +109,7 @@ export default function App() {
   const handleSuccessLogin = (user: AuthorizedUser) => {
     setIsAdminAuthenticated(true);
     setAuthenticatedUser(user);
+    localStorage.setItem('ibcip_admin_session', JSON.stringify(user));
     setViewMode('admin');
   };
 
@@ -111,6 +120,7 @@ export default function App() {
     } catch (err) {
       console.warn('Erro ao deslogar do Firebase:', err);
     }
+    localStorage.removeItem('ibcip_admin_session');
     setIsAdminAuthenticated(false);
     setAuthenticatedUser(null);
     setViewMode('public');

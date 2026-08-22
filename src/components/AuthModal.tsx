@@ -5,11 +5,9 @@ import {
   CheckCircle2,
   Lock,
   RefreshCw,
-  Sparkles,
 } from 'lucide-react';
 import { AuthorizedUser } from '../types';
 import { loginWithGoogleFirebase } from '../services/firebase';
-import { INITIAL_AUTHORIZED_USERS } from '../data/mockData';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -60,7 +58,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 800);
   };
 
-  // Login with Google through Firebase Authentication (with auto fallback)
+  // Real Google Sign-in with Password verification via Firebase Auth
   const handleFirebaseGoogleLogin = async () => {
     setErrorMessage('');
     setIsLoading(true);
@@ -70,34 +68,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       loginSuccess(user);
       setIsLoading(false);
     } catch (err: any) {
-      console.warn('Login Firebase Google falhou/bloqueado pelo provedor:', err);
+      setIsLoading(false);
+      console.error('Erro na autenticação Google:', err);
       
       const errorCode = err?.code || '';
       const errorMsg = err?.message || '';
 
-      // If Firebase authDomain is restricted in this environment or popup is blocked,
-      // seamlessly authenticate the verified administrator (admissclick@gmail.com)
-      if (
-        errorCode === 'auth/unauthorized-domain' ||
-        errorMsg.includes('unauthorized-domain') ||
-        errorCode === 'auth/operation-not-allowed' ||
-        errorCode === 'auth/internal-error'
-      ) {
-        const authorizedLeadership = INITIAL_AUTHORIZED_USERS[0];
-        loginSuccess(authorizedLeadership);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(false);
-
-      if (errorCode === 'auth/popup-closed-by-user') {
-        setErrorMessage('A janela de login com o Google foi fechada.');
+      if (errorCode === 'auth/unauthorized-domain' || errorMsg.includes('unauthorized-domain')) {
+        setErrorMessage(
+          'Domínio não autorizado no Firebase Console. Para liberar o login com senha do Google no link online (Vercel ou Cloud Run), adicione o domínio em: Firebase Console > Authentication > Settings > Authorized domains.'
+        );
+      } else if (errorCode === 'auth/popup-closed-by-user') {
+        setErrorMessage('A janela de autenticação do Google foi fechada antes da confirmação da senha.');
       } else if (errorCode === 'auth/popup-blocked') {
-        setErrorMessage('O navegador bloqueou o pop-up do Google. Por favor, autorize pop-ups para esta página.');
+        setErrorMessage('O navegador bloqueou a janela de login do Google. Por favor, permita pop-ups para autenticar com sua senha.');
+      } else if (errorCode === 'auth/user-cancelled') {
+        setErrorMessage('Autenticação cancelada pelo usuário.');
       } else {
         setErrorMessage(
-          err.message || 'Falha ao autenticar com o Google via Firebase.'
+          err.message || 'Falha ao autenticar com a conta Google.'
         );
       }
     }
@@ -132,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Painel Gestor do Boletim IBCIP
+              Painel Admin do Boletim IBCIP
             </p>
           </div>
         </div>
@@ -144,12 +133,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-bold text-white">Autenticado com Sucesso!</h4>
+              <h4 className="text-base font-bold text-white">Senha do Google Confirmada!</h4>
               <p className="text-xs text-emerald-300 font-mono font-bold">{successUser.name} ({successUser.email})</p>
             </div>
             <div className="inline-flex items-center gap-2 text-xs text-slate-400">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-              <span>Abrindo Painel Gestor...</span>
+              <span>Abrindo Painel Admin...</span>
             </div>
           </div>
         ) : (
@@ -158,12 +147,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Info Box */}
             <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex items-start gap-3">
               <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Autentique-se com sua conta Google pelo <strong className="text-white">Firebase Auth</strong>. Apenas contas da liderança têm permissão para editar o boletim.
-              </p>
+              <div className="text-xs text-slate-300 leading-relaxed space-y-1">
+                <p>
+                  Para acessar o Painel Admin, entre com sua conta Google e digite sua <strong className="text-white">senha oficial do Google</strong>.
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  O acesso é exclusivo para a liderança autorizada da IBCIP.
+                </p>
+              </div>
             </div>
 
-            {/* Error Message (if any real non-domain error occurs) */}
+            {/* Error Message */}
             {errorMessage && (
               <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 text-xs flex items-start gap-2.5 animate-fadeIn">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
@@ -171,7 +165,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             )}
 
-            {/* Google Firebase Login Button */}
+            {/* Google Login Button - Requires user to enter Google password in popup */}
             <button
               type="button"
               disabled={isLoading}
@@ -181,18 +175,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {isLoading ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin text-slate-700" />
-                  <span>Autenticando...</span>
+                  <span>Aguardando autenticação do Google...</span>
                 </>
               ) : (
                 <>
                   <GoogleIcon className="w-5 h-5" />
-                  <span>Entrar com Google (Firebase)</span>
+                  <span>Entrar com Google e Senha</span>
                 </>
               )}
             </button>
 
             {/* Cancel Footer */}
-            <div className="pt-1">
+            <div className="pt-1 text-center">
               <button
                 type="button"
                 onClick={onClose}

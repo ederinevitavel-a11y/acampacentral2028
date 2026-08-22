@@ -97,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <button
                   onClick={() => onToggleViewMode('admin')}
-                  title="Modo Painel Gestor"
+                  title="Modo Painel Admin"
                   className={`flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all touch-manipulation ${
                     viewMode === 'admin'
                       ? 'bg-amber-500 text-slate-950 shadow-sm'
@@ -119,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Logout Button */}
                 <button
                   onClick={onLogoutAdmin}
-                  title="Sair da Conta Gestor"
+                  title="Sair da Conta Admin"
                   className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 rounded-lg transition-colors flex items-center touch-manipulation"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -131,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black shadow-md shadow-amber-500/20 transition-all active:scale-95 touch-manipulation"
               >
                 <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                <span>Gestor</span>
+                <span>Admin</span>
               </button>
             )}
 
