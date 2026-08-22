@@ -18,15 +18,16 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { WeeklyBulletin, AuthorizedUser } from '../types';
 import { AUTHORIZED_GOOGLE_EMAILS, INITIAL_AUTHORIZED_USERS } from '../data/mockData';
 
-// Initialize Firebase App with dynamic env overrides (for Vercel and local deployments)
+// Initialize Firebase App with project credentials directly configured
 const env = (import.meta as any).env || {};
 const effectiveFirebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain || "ibcip-comunhao.firebaseapp.com",
-  projectId: env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || "ibcip-comunhao",
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket || "ibcip-comunhao.firebasestorage.app",
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId,
-  appId: env.VITE_FIREBASE_APP_ID || firebaseConfig.appId,
+  apiKey: env.VITE_FIREBASE_API_KEY || "AIzaSyAAxDIL0HfbT3BGhu38b-mylfgp1BeubTg",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "ibcip-comunhao.firebaseapp.com",
+  projectId: env.VITE_FIREBASE_PROJECT_ID || "ibcip-comunhao",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "ibcip-comunhao.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "515197617981",
+  appId: env.VITE_FIREBASE_APP_ID || "1:515197617981:web:de5ea0d3fe8bbd18262754",
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || "G-PYL341YEDX",
 };
 
 export const activeFirebaseConfig = effectiveFirebaseConfig;
