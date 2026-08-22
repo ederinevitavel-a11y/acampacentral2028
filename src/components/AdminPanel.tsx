@@ -26,7 +26,12 @@ import {
   Image as ImageIcon,
   X,
   Search,
-  Check
+  Check,
+  QrCode,
+  Copy,
+  ExternalLink,
+  Download,
+  Share2
 } from 'lucide-react';
 import {
   WeeklyBulletin,
@@ -42,16 +47,62 @@ import { lookupOfflineVerse, fetchOnlineVerse } from '../utils/bibleLookup';
 
 interface AdminPanelProps {
   bulletin: WeeklyBulletin;
-  onUpdateBulletin: (updated: WeeklyBulletin) => void;
+  onUpdateBulletin: (updated: WeeklyBulletin | ((prev: WeeklyBulletin) => WeeklyBulletin)) => void;
   onOpenQrModal: () => void;
+  cloudSyncStatus?: 'saved' | 'saving' | 'error';
+  onSaveToCloud?: () => Promise<void>;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   bulletin,
   onUpdateBulletin,
   onOpenQrModal,
+  cloudSyncStatus = 'saved',
+  onSaveToCloud,
 }) => {
   const [adminTab, setAdminTab] = useState<AdminTabType>('editor');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [isManualSaving, setIsManualSaving] = useState(false);
+  const [manualSaveSuccess, setManualSaveSuccess] = useState(false);
+
+  const handleManualSave = async () => {
+    if (!onSaveToCloud) return;
+    setIsManualSaving(true);
+    setManualSaveSuccess(false);
+    try {
+      await onSaveToCloud();
+      setManualSaveSuccess(true);
+      setTimeout(() => setManualSaveSuccess(false), 3000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsManualSaving(false);
+    }
+  };
+
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://acampacentral2028.vercel.app';
+  const bulletinUrl = currentOrigin.includes('localhost') ? currentOrigin : 'https://acampacentral2028.vercel.app';
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(bulletinUrl)}&color=0f172a&bgcolor=ffffff&qzone=2`;
+
+  const handleCopyLink = () => {
+    try {
+      navigator.clipboard.writeText(bulletinUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleDownloadQr = () => {
+    const link = document.createElement('a');
+    link.href = qrImageUrl;
+    link.download = 'qrcode-boletim-ibcip.png';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Cartaz Dropzone state
   const [dragActive, setDragActive] = useState(false);
@@ -380,10 +431,52 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
+            {/* Cloud Sync Status Indicator */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-semibold">
+              {cloudSyncStatus === 'saving' || isManualSaving ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                  <span className="text-amber-300">Salvando na Nuvem...</span>
+                </>
+              ) : cloudSyncStatus === 'error' ? (
+                <>
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="text-rose-400">Falha ao sincronizar</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-slate-300">Sincronizado na Nuvem</span>
+                </>
+              )}
+            </div>
+
+            {/* Direct Save/Publish to Cloud Button */}
+            {onSaveToCloud && (
+              <button
+                type="button"
+                onClick={handleManualSave}
+                disabled={isManualSaving}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all shadow-md active:scale-95 disabled:opacity-50"
+              >
+                {manualSaveSuccess ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Publicado no Celular!</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    <span>Salvar & Publicar</span>
+                  </>
+                )}
+              </button>
+            )}
+
             <button
               onClick={onOpenQrModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all active:scale-95"
             >
               <Printer className="w-4 h-4" />
               <span>Gerar Poster Mural</span>
@@ -421,13 +514,174 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <span>Envio Rápido de Cartazes</span>
           </button>
 
+          <button
+            onClick={() => setAdminTab('qrcode')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all ${
+              adminTab === 'qrcode'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+            }`}
+          >
+            <QrCode className="w-4 h-4 text-amber-400" />
+            <span>QR Code & Divulgação</span>
+          </button>
+
         </div>
       </div>
 
       {/* Main Admin Content Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-8">
 
-        {/* TAB 1: EDITOR DO BOLETIM */}
+        {/* TAB 3: QR CODE & DIVULGAÇÃO */}
+        {adminTab === 'qrcode' && (
+          <div className="space-y-8 animate-fadeIn">
+            
+            {/* Main QR Card */}
+            <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                
+                {/* QR Code Frame */}
+                <div className="flex flex-col items-center gap-3 bg-white p-5 rounded-3xl shadow-xl border-4 border-amber-400/80 shrink-0">
+                  <img
+                    src={qrImageUrl}
+                    alt="QR Code do Boletim IBCIP"
+                    className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl"
+                  />
+                  <div className="flex items-center gap-2 text-slate-950 font-black text-xs tracking-tight">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>BOLETIM ONLINE IBCIP</span>
+                  </div>
+                </div>
+
+                {/* Info & Action Controls */}
+                <div className="flex-1 space-y-5 text-center md:text-left">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-bold mb-2">
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Link Permanente e Dinâmico</span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      QR Code Oficial do Boletim
+                    </h2>
+                    <p className="text-sm text-slate-300 mt-1 leading-relaxed">
+                      Este QR Code aponta sempre para a versão atual do boletim publicada no Firebase. Ao salvar ou publicar alterações no painel, qualquer pessoa que escanear verá imediatamente a nova edição.
+                    </p>
+                  </div>
+
+                  {/* URL Box */}
+                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="font-mono text-xs text-amber-300 truncate max-w-full sm:max-w-md px-2 select-all">
+                      {bulletinUrl}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-slate-700 active:scale-95 shrink-0"
+                    >
+                      {copiedLink ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">Link Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Copiar Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Action Buttons Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={onOpenQrModal}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+                    >
+                      <Printer className="w-4 h-4 shrink-0" />
+                      <span>Imprimir Cartaz A4</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadQr}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs border border-slate-700 transition-all active:scale-95"
+                    >
+                      <Download className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Baixar PNG HD</span>
+                    </button>
+
+                    <a
+                      href={bulletinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs border border-slate-700 transition-all active:scale-95"
+                    >
+                      <ExternalLink className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Abrir no Navegador</span>
+                    </a>
+                  </div>
+
+                </div>
+
+              </div>
+            </section>
+
+            {/* Instruction Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-black">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-black text-white">
+                  Como funciona a atualização automática?
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Você <strong>não precisa gerar ou imprimir um novo QR Code toda semana</strong>. O código acima é um identificador fixo que carrega em tempo real o que você salva na aba <strong>Editor do Boletim</strong>.
+                </p>
+                <ul className="space-y-1.5 text-xs text-slate-300 pt-2">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>Status atual: <strong>{bulletin.status}</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Edição: <strong>{bulletin.editionNumber} ({bulletin.weekRange})</strong></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-black">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-black text-white">
+                  Onde e como divulgar na igreja:
+                </h3>
+                <ul className="space-y-2 text-xs text-slate-300 leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">1.</span>
+                    <span><strong>Mural da Igreja:</strong> Use a opção "Imprimir Cartaz A4" para fixar na entrada e no hall de comunhão.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">2.</span>
+                    <span><strong>Telão do Templo:</strong> Baixe o PNG do QR Code e insira nos slides de boas-vindas antes do início do culto.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">3.</span>
+                    <span><strong>Grupos de WhatsApp:</strong> Clique em "Copiar Link" e envie o link direto nos grupos de ministérios e liderança.</span>
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+
+          </div>
+        )}
         {adminTab === 'editor' && (
           <div className="space-y-8 animate-fadeIn">
             

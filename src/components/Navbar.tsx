@@ -66,16 +66,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               {bulletin.status}
             </div>
 
-            {/* QR Poster Button */}
-            <button
-              onClick={onOpenQrModal}
-              title="Cartaz para Mural com QR Code"
-              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition-all active:scale-95 shadow-sm touch-manipulation"
-            >
-              <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
-              <span className="hidden sm:inline">Cartaz QR</span>
-              <span className="sm:hidden text-[11px]">QR</span>
-            </button>
+            {/* QR Poster Button (Admin Only) */}
+            {isAdmin && (
+              <button
+                onClick={onOpenQrModal}
+                title="Cartaz para Mural com QR Code"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition-all active:scale-95 shadow-sm touch-manipulation"
+              >
+                <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+                <span className="hidden sm:inline">Cartaz QR</span>
+                <span className="sm:hidden text-[11px]">QR</span>
+              </button>
+            )}
 
             {/* Admin Controls */}
             {isAdmin ? (

@@ -52,12 +52,15 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+
   // Real-time Firestore sync for Bulletin
   useEffect(() => {
     const unsubscribeFirestore = subscribeToBulletin((remoteData) => {
       if (remoteData && remoteData.events) {
         setBulletin(remoteData);
         localStorage.setItem('comunica_bulletin_v2', JSON.stringify(remoteData));
+        setCloudSyncStatus('saved');
       }
     });
 
@@ -81,6 +84,20 @@ export default function App() {
     };
   }, []);
 
+  // Save explicitly to Firestore
+  const handleSaveToCloud = async (overrideData?: WeeklyBulletin) => {
+    setCloudSyncStatus('saving');
+    try {
+      const dataToSave = overrideData || bulletin;
+      await saveBulletinToFirestore(dataToSave);
+      setCloudSyncStatus('saved');
+    } catch (err) {
+      console.error('Erro ao salvar no Firestore:', err);
+      setCloudSyncStatus('error');
+      throw err;
+    }
+  };
+
   // Handle bulletin updates (local state + Firestore push)
   const handleUpdateBulletin = (updated: WeeklyBulletin | ((prev: WeeklyBulletin) => WeeklyBulletin)) => {
     setBulletin((prev) => {
@@ -88,9 +105,15 @@ export default function App() {
       localStorage.setItem('comunica_bulletin_v2', JSON.stringify(nextBulletin));
       
       // Save to Firebase Firestore
-      saveBulletinToFirestore(nextBulletin).catch((err) => {
-        console.warn('Erro ao salvar no Firestore:', err);
-      });
+      setCloudSyncStatus('saving');
+      saveBulletinToFirestore(nextBulletin)
+        .then(() => {
+          setCloudSyncStatus('saved');
+        })
+        .catch((err) => {
+          console.warn('Erro ao salvar no Firestore:', err);
+          setCloudSyncStatus('error');
+        });
 
       return nextBulletin;
     });
@@ -149,6 +172,8 @@ export default function App() {
           bulletin={bulletin}
           onUpdateBulletin={handleUpdateBulletin}
           onOpenQrModal={() => setIsQrModalOpen(true)}
+          cloudSyncStatus={cloudSyncStatus}
+          onSaveToCloud={handleSaveToCloud}
         />
       )}
 

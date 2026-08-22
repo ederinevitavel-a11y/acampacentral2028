@@ -66,4 +66,4 @@ export interface AuthorizedUser {
 
 export type PublicTabType = 'inicio' | 'pastoral' | 'programacao' | 'avisos';
 
-export type AdminTabType = 'editor' | 'ai_upload';
+export type AdminTabType = 'editor' | 'ai_upload' | 'qrcode';

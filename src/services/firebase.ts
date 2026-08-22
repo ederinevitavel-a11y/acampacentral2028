@@ -20,14 +20,16 @@ import { AUTHORIZED_GOOGLE_EMAILS, INITIAL_AUTHORIZED_USERS } from '../data/mock
 
 // Initialize Firebase App with project credentials directly configured
 const env = (import.meta as any).env || {};
+const cleanStr = (val?: string) => (val ? String(val).trim().replace(/^["']|["']$/g, '') : '');
+
 const effectiveFirebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || "AIzaSyAAxDIL0HfbT3BGhu38b-mylfgp1BeubTg",
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "ibcip-comunhao.firebaseapp.com",
-  projectId: env.VITE_FIREBASE_PROJECT_ID || "ibcip-comunhao",
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "ibcip-comunhao.firebasestorage.app",
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "515197617981",
-  appId: env.VITE_FIREBASE_APP_ID || "1:515197617981:web:de5ea0d3fe8bbd18262754",
-  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || "G-PYL341YEDX",
+  apiKey: cleanStr(env.VITE_FIREBASE_API_KEY) || "AIzaSyAAxDIL0HfbT3BGhu38b-mylfgp1BeubTg",
+  authDomain: cleanStr(env.VITE_FIREBASE_AUTH_DOMAIN) || "ibcip-comunhao.firebaseapp.com",
+  projectId: cleanStr(env.VITE_FIREBASE_PROJECT_ID) || "ibcip-comunhao",
+  storageBucket: cleanStr(env.VITE_FIREBASE_STORAGE_BUCKET) || "ibcip-comunhao.firebasestorage.app",
+  messagingSenderId: cleanStr(env.VITE_FIREBASE_MESSAGING_SENDER_ID) || "515197617981",
+  appId: cleanStr(env.VITE_FIREBASE_APP_ID) || "1:515197617981:web:de5ea0d3fe8bbd18262754",
+  measurementId: cleanStr(env.VITE_FIREBASE_MEASUREMENT_ID) || "G-PYL341YEDX",
 };
 
 export const activeFirebaseConfig = effectiveFirebaseConfig;
@@ -43,10 +45,8 @@ googleAuthProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
-// Initialize Firestore (pass the specific databaseId if provided)
-export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+// Initialize Firestore (default database of ibcip-comunhao)
+export const db = getFirestore(app);
 
 const BULLETIN_DOC_ID = 'current_bulletin';
 

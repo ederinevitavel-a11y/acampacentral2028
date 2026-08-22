@@ -80,6 +80,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMessage(
           `O domínio "${currentHost}" não está autorizado no projeto Firebase "${currentProject}". Adicione "${currentHost}" no Firebase Console do projeto correspondente (Authentication > Settings > Authorized domains) ou configure as variáveis VITE_FIREBASE_* na Vercel.`
         );
+      } else if (errorCode === 'auth/api-key-not-valid' || errorMsg.includes('api-key-not-valid')) {
+        setErrorMessage(
+          `Chave de API do Firebase não autorizada. No Google Cloud Console (APIs & Services > Credentials), certifique-se de que a Browser Key do projeto "${activeFirebaseConfig.projectId}" não possui restrições bloqueando a Web / Vercel.`
+        );
       } else if (errorCode === 'auth/popup-closed-by-user') {
         setErrorMessage('A janela de autenticação do Google foi fechada antes da confirmação da senha.');
       } else if (errorCode === 'auth/popup-blocked') {
