@@ -7,7 +7,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { AuthorizedUser } from '../types';
-import { loginWithGoogleFirebase } from '../services/firebase';
+import { loginWithGoogleFirebase, activeFirebaseConfig } from '../services/firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -75,8 +75,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const errorMsg = err?.message || '';
 
       if (errorCode === 'auth/unauthorized-domain' || errorMsg.includes('unauthorized-domain')) {
+        const currentHost = window.location.hostname;
+        const currentProject = activeFirebaseConfig.authDomain || activeFirebaseConfig.projectId;
         setErrorMessage(
-          'Domínio não autorizado no Firebase Console. Para liberar o login com senha do Google no link online (Vercel ou Cloud Run), adicione o domínio em: Firebase Console > Authentication > Settings > Authorized domains.'
+          `O domínio "${currentHost}" não está autorizado no projeto Firebase "${currentProject}". Adicione "${currentHost}" no Firebase Console do projeto correspondente (Authentication > Settings > Authorized domains) ou configure as variáveis VITE_FIREBASE_* na Vercel.`
         );
       } else if (errorCode === 'auth/popup-closed-by-user') {
         setErrorMessage('A janela de autenticação do Google foi fechada antes da confirmação da senha.');

@@ -1,14 +1,5 @@
 {
-  "version": 2,
   "rewrites": [
-    {
-      "source": "/api/submit",
-      "destination": "/api/submit.ts"
-    },
-    {
-      "source": "/api/stats",
-      "destination": "/api/stats.ts"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

@@ -18,8 +18,20 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { WeeklyBulletin, AuthorizedUser } from '../types';
 import { AUTHORIZED_GOOGLE_EMAILS, INITIAL_AUTHORIZED_USERS } from '../data/mockData';
 
-// Initialize Firebase App
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// Initialize Firebase App with dynamic env overrides (for Vercel and local deployments)
+const env = (import.meta as any).env || {};
+const effectiveFirebaseConfig = {
+  apiKey: env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain || "ibcip-comunhao.firebaseapp.com",
+  projectId: env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId || "ibcip-comunhao",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket || "ibcip-comunhao.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId,
+  appId: env.VITE_FIREBASE_APP_ID || firebaseConfig.appId,
+};
+
+export const activeFirebaseConfig = effectiveFirebaseConfig;
+
+const app = getApps().length > 0 ? getApp() : initializeApp(effectiveFirebaseConfig);
 
 // Initialize Auth
 export const auth = getAuth(app);
