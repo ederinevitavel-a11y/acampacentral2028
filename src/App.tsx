@@ -16,18 +16,23 @@ import {
 export default function App() {
   // Load bulletin from localStorage or default initial
   const [bulletin, setBulletin] = useState<WeeklyBulletin>(() => {
+    let data = INITIAL_BULLETIN;
     const saved = localStorage.getItem('comunica_bulletin_v2');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && Array.isArray(parsed.events)) {
-          return { ...parsed, churchName: 'IBCIP' };
+          data = { ...parsed, churchName: 'IBCIP' };
         }
       } catch (e) {
         console.error('Erro ao ler boletim do localStorage', e);
       }
     }
-    return INITIAL_BULLETIN;
+    // Ensure pastorPhotoUrl uses the uploaded pastor portrait if missing or pointing to old unsplash/local
+    if (data.pastoral && (!data.pastoral.pastorPhotoUrl || data.pastoral.pastorPhotoUrl.includes('unsplash.com') || data.pastoral.pastorPhotoUrl === '/pastor.jpg')) {
+      data.pastoral.pastorPhotoUrl = 'https://i.imgur.com/HSPlrt0.png';
+    }
+    return data;
   });
 
   // View state
@@ -58,6 +63,9 @@ export default function App() {
   useEffect(() => {
     const unsubscribeFirestore = subscribeToBulletin((remoteData) => {
       if (remoteData && remoteData.events) {
+        if (remoteData.pastoral && (!remoteData.pastoral.pastorPhotoUrl || remoteData.pastoral.pastorPhotoUrl.includes('unsplash.com') || remoteData.pastoral.pastorPhotoUrl === '/pastor.jpg')) {
+          remoteData.pastoral.pastorPhotoUrl = 'https://i.imgur.com/HSPlrt0.png';
+        }
         setBulletin(remoteData);
         localStorage.setItem('comunica_bulletin_v2', JSON.stringify(remoteData));
         setCloudSyncStatus('saved');

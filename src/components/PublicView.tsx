@@ -585,7 +585,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
                     {bulletin.pastoral.title}
                   </h2>
                   <p className="text-xs sm:text-sm font-bold text-amber-300">
-                    {bulletin.pastoral.pastorName} • <span className="text-slate-400 font-normal">{bulletin.pastoral.pastorTitle}</span>
+                    {bulletin.pastoral.pastorName}
                   </p>
                   <p className="text-[11px] sm:text-xs text-slate-500">{bulletin.pastoral.date}</p>
                 </div>

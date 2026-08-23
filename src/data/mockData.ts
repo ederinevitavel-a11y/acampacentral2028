@@ -164,7 +164,7 @@ export const INITIAL_BULLETIN: WeeklyBulletin = {
     title: 'Perseverando com Esperança no Caminho',
     pastorName: 'Pr. Carlos Eduardo e Pra. Ana Luzia',
     pastorTitle: 'Pastores Titulares',
-    pastorPhotoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    pastorPhotoUrl: 'https://i.imgur.com/HSPlrt0.png',
     verse: 'Guardemos firme a confissão da nossa esperança, sem vacilar, pois quem fez a promessa é fiel.',
     verseReference: 'Hebreus 10:23',
     content: `Querida igreja,\n\nNesta semana fomos lembrados de que a fé não é a ausência de desafios, mas a presença constante da paz de Deus em meio a eles. Quando olhamos para a caminhada do povo de Deus nas Escrituras, percebemos que as vitórias mais marcantes nasceram de momentos em que a perseverança substituiu a dúvida.\n\nIncentivo você e sua família a renovarem as forças nas orações diárias e no convívio comunitário. Que a nossa igreja seja sempre um refúgio de graça, ensino e amor acolhedor para todos os que chegam sedentos pela verdade de Cristo. Esperamos você nos cultos desta semana com o coração aberto!`,

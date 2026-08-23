@@ -797,28 +797,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       </button>
                     </div>
 
-                    {/* Quick Presets */}
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      <span className="text-[11px] text-slate-400 font-medium">Sugestões rápidas:</span>
-                      {[
-                        'Salmos 122:1',
-                        'Salmos 23:1',
-                        'João 3:16',
-                        'Filipenses 4:13',
-                        'Isaías 40:31',
-                        'Josué 1:9',
-                        'Romanos 8:28'
-                      ].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => applyVersePreset(preset)}
-                          className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border border-slate-700/80 transition-all active:scale-95 touch-manipulation"
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
+
                   </div>
                 </div>
 
@@ -1035,6 +1014,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
+
+
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">
