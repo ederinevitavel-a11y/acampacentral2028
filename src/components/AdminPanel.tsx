@@ -31,7 +31,8 @@ import {
   Copy,
   ExternalLink,
   Download,
-  Share2
+  Share2,
+  CalendarDays
 } from 'lucide-react';
 import {
   WeeklyBulletin,
@@ -44,6 +45,7 @@ import {
 } from '../types';
 import { ImageLightboxModal } from './ImageLightboxModal';
 import { lookupOfflineVerse, fetchOnlineVerse } from '../utils/bibleLookup';
+import { formatEventDisplayDate, formatEventFullSchedule } from '../utils/dateHelpers';
 
 interface AdminPanelProps {
   bulletin: WeeklyBulletin;
@@ -232,7 +234,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       id: `ev-${Date.now()}`,
       title: initialTitle || '',
       category: 'Culto',
-      date: 'Domingo',
+      dayOfWeek: 'Domingo',
+      date: '',
       time: '19:00',
       location: 'Templo Principal',
       description:
@@ -300,7 +303,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       id: cartazEvent.id || `ev-${Date.now()}`,
       title: cartazEvent.title,
       category: (cartazEvent.category as EventCategory) || 'Culto',
-      date: cartazEvent.date || 'Domingo',
+      dayOfWeek: cartazEvent.dayOfWeek || 'Domingo',
+      date: cartazEvent.date || '',
       time: cartazEvent.time || '19:00',
       location: cartazEvent.location || 'Templo Principal',
       description: cartazEvent.description || '',
@@ -365,7 +369,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       onUpdateBulletin({
         ...bulletin,
         events: bulletin.events.map((ev) =>
-          ev.id === editingEvent.id ? ({ ...ev, ...editingEvent } as ChurchEvent) : ev
+          ev.id === editingEvent.id
+            ? ({
+                ...ev,
+                ...editingEvent,
+                dayOfWeek: editingEvent.dayOfWeek || 'Domingo',
+                date: editingEvent.date || '',
+                time: editingEvent.time || '19:00',
+                imageFit: editingEvent.imageFit || 'contain',
+              } as ChurchEvent)
+            : ev
         ),
       });
     } else {
@@ -374,11 +387,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         id: `ev-${Date.now()}`,
         title: editingEvent.title || '',
         category: (editingEvent.category as EventCategory) || 'Culto',
-        date: editingEvent.date || 'Domingo',
+        dayOfWeek: editingEvent.dayOfWeek || 'Domingo',
+        date: editingEvent.date || '',
         time: editingEvent.time || '19:00',
         location: editingEvent.location || 'Templo Principal',
         description: editingEvent.description || '',
-        imageUrl: editingEvent.imageUrl || 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&q=80&w=1000',
+        imageUrl:
+          editingEvent.imageUrl ||
+          'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&q=80&w=1000',
+        imageFit: editingEvent.imageFit || 'contain',
         highlight: editingEvent.highlight ?? false,
         tags: editingEvent.tags || ['Culto'],
         createdAt: new Date().toISOString(),
@@ -402,127 +419,136 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24 sm:pb-20">
       
-      {/* Admin Top Status & Action Bar */}
-      <div className="bg-slate-900/90 border-b border-slate-800 px-4 sm:px-6 py-4 sticky top-14 z-20 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Admin Top Status & Action Bar - Highly Responsive & Mobile Optimized */}
+      <div className="bg-slate-900/95 border-b border-slate-800 px-3 sm:px-6 py-3 sm:py-4 sticky top-12 sm:top-14 z-20 backdrop-blur-md shadow-lg">
+        <div className="max-w-5xl mx-auto flex flex-col gap-3">
           
-          <div className="flex items-center gap-3">
+          {/* Top row: Status, Info & Cloud Sync */}
+          <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+            
+            {/* Status toggle button */}
             <button
+              type="button"
               onClick={toggleStatus}
-              className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-all shadow-md active:scale-95 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs font-black transition-all shadow-md active:scale-95 touch-manipulation shrink-0 ${
                 bulletin.status === 'Publicado'
                   ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
                   : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
               }`}
             >
-              <span className={`w-2.5 h-2.5 rounded-full ${
+              <span className={`w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full shrink-0 ${
                 bulletin.status === 'Publicado' ? 'bg-slate-950 animate-ping' : 'bg-slate-950'
               }`} />
-              <span>Status: {bulletin.status}</span>
-              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded-md">
-                (Clique para alterar)
+              <span className="truncate">Status: {bulletin.status}</span>
+              <span className="hidden sm:inline text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded-md font-semibold">
+                (Alterar)
               </span>
             </button>
 
-            <span className="text-xs text-slate-400 hidden md:inline">
-              IBCIP • {bulletin.weekRange}
-            </span>
-          </div>
-
-          <div className="flex items-center flex-wrap gap-2">
             {/* Cloud Sync Status Indicator */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-semibold">
+            <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-950/90 border border-slate-800 text-[11px] sm:text-xs font-semibold shrink-0">
               {cloudSyncStatus === 'saving' || isManualSaving ? (
                 <>
-                  <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                  <span className="text-amber-300">Salvando na Nuvem...</span>
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
+                  <span className="text-amber-300">Salvando...</span>
                 </>
               ) : cloudSyncStatus === 'error' ? (
                 <>
-                  <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
-                  <span className="text-rose-400">Falha ao sincronizar</span>
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  <span className="text-rose-400">Falha ao salvar</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-slate-300">Sincronizado na Nuvem</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-slate-300 hidden xs:inline">Sincronizado na Nuvem</span>
+                  <span className="text-slate-300 xs:hidden">Nuvem OK</span>
                 </>
               )}
             </div>
 
+            {/* Week & Church tag (Desktop) */}
+            <span className="text-xs text-slate-400 hidden lg:inline font-medium ml-auto">
+              IBCIP • {bulletin.weekRange}
+            </span>
+          </div>
+
+          {/* Bottom row on mobile / Right row on desktop: Action Buttons */}
+          <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-end gap-2 pt-1 border-t border-slate-800/60 sm:border-t-0 sm:pt-0">
+            
             {/* Direct Save/Publish to Cloud Button */}
             {onSaveToCloud && (
               <button
                 type="button"
                 onClick={handleManualSave}
                 disabled={isManualSaving}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all shadow-md active:scale-95 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition-all shadow-md active:scale-95 disabled:opacity-50 touch-manipulation w-full sm:w-auto"
               >
                 {manualSaveSuccess ? (
                   <>
-                    <Check className="w-4 h-4" />
-                    <span>Publicado no Celular!</span>
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Publicado!</span>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4" />
-                    <span>Salvar & Publicar</span>
+                    <Upload className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Salvar & Publicar</span>
                   </>
                 )}
               </button>
             )}
 
             <button
+              type="button"
               onClick={onOpenQrModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all active:scale-95"
+              className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all active:scale-95 touch-manipulation w-full sm:w-auto"
             >
-              <Printer className="w-4 h-4" />
-              <span>Gerar Poster Mural</span>
+              <Printer className="w-4 h-4 shrink-0 text-amber-400" />
+              <span className="truncate">Poster Mural</span>
             </button>
           </div>
 
         </div>
       </div>
 
-      {/* Admin Navigation Tabs */}
-      <div className="border-b border-slate-800 bg-slate-950/80 px-4">
-        <div className="max-w-5xl mx-auto flex items-center gap-2 overflow-x-auto py-3 no-scrollbar">
+      {/* Admin Navigation Tabs - Horizontal Scrolling on Mobile */}
+      <div className="border-b border-slate-800 bg-slate-950/90 px-3 sm:px-4 sticky top-[108px] sm:top-[128px] z-10 backdrop-blur-md">
+        <div className="max-w-5xl mx-auto flex items-center gap-2 overflow-x-auto py-2.5 no-scrollbar scroll-smooth">
           
           <button
             onClick={() => setAdminTab('editor')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 touch-manipulation ${
               adminTab === 'editor'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            <Sliders className="w-4 h-4" />
+            <Sliders className="w-4 h-4 shrink-0" />
             <span>Editor do Boletim</span>
           </button>
 
           <button
             onClick={() => setAdminTab('ai_upload')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 touch-manipulation ${
               adminTab === 'ai_upload'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
             }`}
           >
-            <FileImage className="w-4 h-4 text-amber-400" />
+            <FileImage className="w-4 h-4 text-amber-400 shrink-0" />
             <span>Envio Rápido de Cartazes</span>
           </button>
 
           <button
             onClick={() => setAdminTab('qrcode')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 touch-manipulation ${
               adminTab === 'qrcode'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
             }`}
           >
-            <QrCode className="w-4 h-4 text-amber-400" />
+            <QrCode className="w-4 h-4 text-amber-400 shrink-0" />
             <span>QR Code & Divulgação</span>
           </button>
 
@@ -530,7 +556,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       </div>
 
       {/* Main Admin Content Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
 
         {/* TAB 3: QR CODE & DIVULGAÇÃO */}
         {adminTab === 'qrcode' && (
@@ -686,24 +712,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <div className="space-y-8 animate-fadeIn">
             
             {/* Bulletin Metadata Settings */}
-            <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3 sm:pb-4">
                 <div>
-                  <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <Sliders className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                    <Sliders className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
                     <span>Configurações do Boletim da Semana</span>
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
                     Digite a referência bíblica para carregar o versículo automaticamente ou edite o texto livremente.
                   </p>
                 </div>
-                <span className="self-start sm:self-auto text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                <span className="self-start sm:self-auto text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
                   Igreja: IBCIP
                 </span>
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {/* Week range */}
                   <div className="sm:col-span-1">
                     <label className="block text-xs font-bold text-slate-300 mb-1">
@@ -716,7 +742,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         onUpdateBulletin({ ...bulletin, weekRange: e.target.value, churchName: 'IBCIP' })
                       }
                       placeholder="Ex: 21 a 27 de Agosto de 2026"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                     />
                   </div>
 
@@ -747,14 +773,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             }
                           }}
                           placeholder="Ex: Salmos 122:1, João 3:16, Filipenses 4:13..."
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400 placeholder:text-slate-600"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 placeholder:text-slate-600"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => handleSearchVerse()}
                         disabled={isSearchingVerse || !bulletin.themeVerseRef.trim()}
-                        className="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 active:scale-95 shadow"
+                        className="px-3.5 sm:px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 active:scale-95 shadow touch-manipulation"
                         title="Buscar texto bíblico online"
                       >
                         {isSearchingVerse ? (
@@ -787,7 +813,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           key={preset}
                           type="button"
                           onClick={() => applyVersePreset(preset)}
-                          className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border border-slate-700/80 transition-colors"
+                          className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border border-slate-700/80 transition-all active:scale-95 touch-manipulation"
                         >
                           {preset}
                         </button>
@@ -802,7 +828,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <label className="block text-xs font-bold text-slate-300">
                       Versículo Temático da Semana (Editável)
                     </label>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">
                       Você pode personalizar ou ajustar o texto livremente
                     </span>
                   </div>
@@ -813,29 +839,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       onUpdateBulletin({ ...bulletin, themeVerse: e.target.value, churchName: 'IBCIP' })
                     }
                     placeholder="O texto do versículo aparecerá aqui automaticamente e pode ser editado a qualquer momento..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400 resize-y leading-relaxed"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 resize-y leading-relaxed"
                   />
                 </div>
               </div>
             </section>
 
             {/* Events Manager Section */}
-            <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between">
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
                     <span>Programação e Cultos da Semana ({bulletin.events.length})</span>
                   </h3>
                   <p className="text-xs text-slate-400">Adicione ou edite os eventos do boletim</p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => {
-                    setEditingEvent({});
+                    setEditingEvent({
+                      title: '',
+                      category: 'Culto',
+                      dayOfWeek: 'Domingo',
+                      date: '',
+                      time: '19:00',
+                      location: 'Templo Principal',
+                      description: '',
+                      highlight: false,
+                      imageFit: 'contain',
+                    });
                     setIsEventModalOpen(true);
                   }}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs transition-all shadow-md active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs transition-all shadow-md active:scale-95 touch-manipulation w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Novo Evento</span>
@@ -843,11 +880,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
 
               {/* Events List */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-1 sm:pt-2">
                 {bulletin.events.map((ev) => (
                   <div
                     key={ev.id}
-                    className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3"
+                    className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between space-y-3"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -863,29 +900,53 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                       <h4 className="font-extrabold text-sm text-white">{ev.title}</h4>
                       <p className="text-xs text-amber-300 font-bold">
-                        {ev.date} às {ev.time} • <span className="text-slate-400 font-normal">{ev.location}</span>
+                        {formatEventFullSchedule(ev)} • <span className="text-slate-400 font-normal">{ev.location}</span>
                       </p>
                       <p className="text-xs text-slate-400 line-clamp-2">{ev.description}</p>
                     </div>
 
                     <div className="pt-2 border-t border-slate-800 flex items-center justify-end gap-2">
                       <button
+                        type="button"
                         onClick={() => {
-                          setEditingEvent(ev);
+                          let dayOfWeek = ev.dayOfWeek;
+                          let date = ev.date || '';
+                          if (!dayOfWeek && date) {
+                            const days = [
+                              'Domingo',
+                              'Segunda-feira',
+                              'Terça-feira',
+                              'Quarta-feira',
+                              'Quinta-feira',
+                              'Sexta-feira',
+                              'Sábado',
+                            ];
+                            const foundDay = days.find((d) => date.startsWith(d));
+                            if (foundDay) {
+                              dayOfWeek = foundDay;
+                              date = date.replace(foundDay, '').replace(/^[,\s•-]+/, '').trim();
+                            }
+                          }
+                          setEditingEvent({
+                            ...ev,
+                            dayOfWeek: dayOfWeek || 'Domingo',
+                            date: date,
+                          });
                           setIsEventModalOpen(true);
                         }}
-                        className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 px-2.5"
+                        className="p-2 sm:p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 px-3 touch-manipulation active:scale-95"
                       >
                         <Edit className="w-3.5 h-3.5" />
                         <span>Editar</span>
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => handleDeleteEvent(ev.id)}
-                        className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-bold transition-colors"
+                        className="p-2 sm:p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-bold transition-all touch-manipulation active:scale-95"
                         title="Excluir evento"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -894,11 +955,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </section>
 
             {/* Pastoral Message Manager Section */}
-            <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
                     <span>Mensagem e Reflexão Pastoral</span>
                   </h3>
                   <p className="text-xs text-slate-400">Atualize a mensagem pastoral da semana</p>
@@ -906,24 +967,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
 
               {/* AI Text Refinement Assistant */}
-              <div className="bg-slate-950 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+              <div className="bg-slate-950 border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 space-y-3">
                 <label className="block text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                  <Wand2 className="w-4 h-4 text-amber-400" />
+                  <Wand2 className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Assistente de Escrita Pastoral por IA</span>
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={pastoralPrompt}
                     onChange={(e) => setPastoralPrompt(e.target.value)}
                     placeholder="Ex: Escreva uma palavra sobre gratidão e fé para o próximo domingo"
-                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                   />
                   <button
                     type="button"
                     onClick={handleGeneratePastoralText}
                     disabled={isGeneratingPastoral || !pastoralPrompt}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black rounded-xl text-xs transition-all shrink-0 flex items-center gap-1.5"
+                    className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black rounded-xl text-xs transition-all shrink-0 flex items-center justify-center gap-1.5 touch-manipulation active:scale-95"
                   >
                     {isGeneratingPastoral ? (
                       <>
@@ -940,7 +1001,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">
                     Título da Mensagem
@@ -954,7 +1015,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         pastoral: { ...bulletin.pastoral, title: e.target.value },
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
 
@@ -971,7 +1032,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         pastoral: { ...bulletin.pastoral, pastorName: e.target.value },
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
 
@@ -988,7 +1049,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         pastoral: { ...bulletin.pastoral, verse: e.target.value },
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
 
@@ -1005,7 +1066,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         pastoral: { ...bulletin.pastoral, verseReference: e.target.value },
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
 
@@ -1022,7 +1083,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         pastoral: { ...bulletin.pastoral, content: e.target.value },
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400 leading-relaxed"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 leading-relaxed"
                   />
                 </div>
               </div>
@@ -1214,9 +1275,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           >
                             <option value="Culto">Culto</option>
                             <option value="Jovens">Jovens</option>
+                            <option value="Adolescentes">Adolescentes</option>
                             <option value="Infantil">Infantil</option>
                             <option value="Casais">Casais</option>
                             <option value="Especial">Especial</option>
+                            <option value="Evento">Evento</option>
                             <option value="Aviso">Aviso</option>
                           </select>
                         </div>
@@ -1235,34 +1298,78 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                            Data do Evento
-                          </label>
-                          <input
-                            type="text"
-                            value={cartazEvent.date || ''}
-                            onChange={(e) => setCartazEvent({ ...cartazEvent, date: e.target.value })}
-                            placeholder="Ex: Domingo, 24 de Agosto"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
-                          />
+                      <div className="space-y-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-amber-300 mb-1 flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Dia da Semana</span>
+                            </label>
+                            <select
+                              value={cartazEvent.dayOfWeek || 'Domingo'}
+                              onChange={(e) =>
+                                setCartazEvent({ ...cartazEvent, dayOfWeek: e.target.value })
+                              }
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                            >
+                              <option value="Domingo">Domingo</option>
+                              <option value="Segunda-feira">Segunda-feira</option>
+                              <option value="Terça-feira">Terça-feira</option>
+                              <option value="Quarta-feira">Quarta-feira</option>
+                              <option value="Quinta-feira">Quinta-feira</option>
+                              <option value="Sexta-feira">Sexta-feira</option>
+                              <option value="Sábado">Sábado</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-300 mb-1 flex items-center gap-1">
+                              <CalendarDays className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Data (Dia / Mês)</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={cartazEvent.date || ''}
+                              onChange={(e) => setCartazEvent({ ...cartazEvent, date: e.target.value })}
+                              placeholder="Ex: 24 de Agosto, 24/08..."
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                            />
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                            Local na Igreja
-                          </label>
-                          <input
-                            type="text"
-                            value={cartazEvent.location || ''}
-                            onChange={(e) =>
-                              setCartazEvent({ ...cartazEvent, location: e.target.value })
-                            }
-                            placeholder="Ex: Templo Principal"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
-                          />
+                        {/* Quick day buttons */}
+                        <div className="flex items-center flex-wrap gap-1 pt-1">
+                          <span className="text-[10px] text-slate-400 font-semibold mr-1">Atalho:</span>
+                          {['Domingo', 'Quarta-feira', 'Sábado', 'Sexta-feira', 'Segunda-feira', 'Terça-feira', 'Quinta-feira'].map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => setCartazEvent({ ...cartazEvent, dayOfWeek: d })}
+                              className={`text-[10px] px-2 py-0.5 rounded-lg border transition-all ${
+                                cartazEvent.dayOfWeek === d
+                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                              }`}
+                            >
+                              {d.replace('-feira', '')}
+                            </button>
+                          ))}
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                          Local na Igreja
+                        </label>
+                        <input
+                          type="text"
+                          value={cartazEvent.location || ''}
+                          onChange={(e) =>
+                            setCartazEvent({ ...cartazEvent, location: e.target.value })
+                          }
+                          placeholder="Ex: Templo Principal"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                        />
                       </div>
 
                       <div>
@@ -1329,7 +1436,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-amber-500/20 transition-all active:scale-95 flex items-center gap-2"
                     >
                       <Sparkles className="w-4 h-4" />
-                      <span>Publicar no Boletim Comunhão!</span>
+                      <span>Publicar no Boletim Comunica!</span>
                     </button>
                   </div>
 
@@ -1345,25 +1452,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       {/* Modal for Creating / Editing Event */}
       {isEventModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-lg font-black text-white">
-              {editingEvent?.id ? 'Editar Evento' : 'Novo Evento no Boletim'}
-            </h3>
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 text-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col p-5 sm:p-6 space-y-4 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+              <h3 className="text-base sm:text-lg font-black text-white">
+                {editingEvent?.id ? 'Editar Evento' : 'Novo Evento no Boletim'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsEventModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveEvent} className="space-y-3">
+            <form onSubmit={handleSaveEvent} className="space-y-3.5 overflow-y-auto pr-1 no-scrollbar flex-1">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">Título</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Título *</label>
                 <input
                   type="text"
                   required
                   value={editingEvent?.title || ''}
                   onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                  placeholder="Ex: Culto de Celebração & Ceia"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">Categoria</label>
                   <select
@@ -1374,56 +1491,105 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         category: e.target.value as EventCategory,
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   >
                     <option value="Culto">Culto</option>
                     <option value="Jovens">Jovens</option>
+                    <option value="Adolescentes">Adolescentes</option>
                     <option value="Infantil">Infantil</option>
                     <option value="Casais">Casais</option>
                     <option value="Especial">Especial</option>
+                    <option value="Evento">Evento</option>
+                    <option value="Aviso">Aviso</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Horário</label>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Horário *</label>
                   <input
                     type="text"
                     required
                     value={editingEvent?.time || '19:00'}
                     onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    placeholder="Ex: 19:00"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Data</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingEvent?.date || 'Domingo'}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
-                  />
+              <div className="space-y-2.5 bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-amber-300 mb-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Dia da Semana *</span>
+                    </label>
+                    <select
+                      value={editingEvent?.dayOfWeek || 'Domingo'}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, dayOfWeek: e.target.value })}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                    >
+                      <option value="Domingo">Domingo</option>
+                      <option value="Segunda-feira">Segunda-feira</option>
+                      <option value="Terça-feira">Terça-feira</option>
+                      <option value="Quarta-feira">Quarta-feira</option>
+                      <option value="Quinta-feira">Quinta-feira</option>
+                      <option value="Sexta-feira">Sexta-feira</option>
+                      <option value="Sábado">Sábado</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1">
+                      <CalendarDays className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Data (Dia / Mês)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editingEvent?.date || ''}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                      placeholder="Ex: 24 de Agosto, 24/08..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Local</label>
-                  <input
-                    type="text"
-                    value={editingEvent?.location || 'Templo Principal'}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
-                  />
+                {/* Quick Day Presets */}
+                <div className="flex items-center flex-wrap gap-1.5 pt-1">
+                  <span className="text-[11px] text-slate-400 font-semibold mr-1">Atalhos de dia:</span>
+                  {['Domingo', 'Quarta-feira', 'Sábado', 'Sexta-feira', 'Segunda-feira', 'Terça-feira', 'Quinta-feira'].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setEditingEvent({ ...editingEvent, dayOfWeek: d })}
+                      className={`text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-lg border transition-all active:scale-95 touch-manipulation ${
+                        editingEvent?.dayOfWeek === d
+                          ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-sm'
+                          : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {d.replace('-feira', '')}
+                    </button>
+                  ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Local na Igreja</label>
+                <input
+                  type="text"
+                  value={editingEvent?.location || 'Templo Principal'}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
+                  placeholder="Ex: Templo Principal, Salão Social, Auditório..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                />
               </div>
 
               {/* Image / Flyer Section with direct upload and framing mode */}
               <div className="space-y-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     <span>Cartaz / Imagem do Evento</span>
                   </label>
                   {editingEvent?.imageUrl && (
@@ -1439,7 +1605,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
 
                 {/* Upload or URL input */}
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={editingEvent?.imageUrl || ''}
@@ -1447,9 +1613,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     placeholder="Cole o link da imagem (URL) ou escolha um arquivo..."
                     className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
                   />
-                  <label className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors border border-slate-700">
+                  <label className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-colors border border-slate-700 touch-manipulation">
                     <Upload className="w-3.5 h-3.5" />
-                    <span>Carregar</span>
+                    <span>Carregar Foto</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1509,18 +1675,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => setEditingEvent({ ...editingEvent, imageFit: 'contain' })}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
                             editingEvent.imageFit !== 'cover'
                               ? 'bg-amber-500 text-slate-950'
                               : 'bg-slate-800 text-slate-400'
                           }`}
                         >
-                          Sem Cortes (Inteiro)
+                          Sem Cortes
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingEvent({ ...editingEvent, imageFit: 'cover' })}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
                             editingEvent.imageFit === 'cover'
                               ? 'bg-amber-500 text-slate-950'
                               : 'bg-slate-800 text-slate-400'
@@ -1540,7 +1706,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   rows={3}
                   value={editingEvent?.description || ''}
                   onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-400"
+                  placeholder="Breve descrição ou chamada especial..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -1554,22 +1721,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   }
                   className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-800"
                 />
-                <label htmlFor="highlight" className="text-xs font-bold text-amber-300">
+                <label htmlFor="highlight" className="text-xs font-bold text-amber-300 cursor-pointer">
                   Marcar como Destaque Principal da Semana
                 </label>
               </div>
 
-              <div className="pt-3 flex gap-2 justify-end">
+              <div className="pt-3 border-t border-slate-800/80 flex gap-2 justify-end">
                 <button
                   type="button"
                   onClick={() => setIsEventModalOpen(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-700"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors touch-manipulation"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-md"
+                  className="flex-1 sm:flex-initial px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-md transition-all active:scale-95 touch-manipulation"
                 >
                   Salvar Evento
                 </button>

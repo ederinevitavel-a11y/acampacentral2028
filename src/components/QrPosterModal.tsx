@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { WeeklyBulletin } from '../types';
+import { formatEventFullSchedule } from '../utils/dateHelpers';
 
 interface QrPosterModalProps {
   isOpen: boolean;
@@ -325,7 +326,7 @@ export const QrPosterModal: React.FC<QrPosterModalProps> = ({
                       <div className="w-1.5 self-stretch bg-amber-500 rounded-full shrink-0 print:bg-black" />
                       <div className="min-w-0 text-left">
                         <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wide block print:text-black">
-                          {ev.category} • {ev.date} às {ev.time}
+                          {ev.category} • {formatEventFullSchedule(ev)}
                         </span>
                         <h5 className="font-bold text-xs text-white truncate print:text-black">{ev.title}</h5>
                         <p className="text-[11px] text-slate-400 truncate print:text-slate-700">{ev.location}</p>

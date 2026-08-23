@@ -1,6 +1,6 @@
 {
-  "name": "Comunhão! - Boletim Digital da Igreja",
-  "description": "Boletim Informativo Digital Comunhão! para a IBCIP com avisos, programação dos cultos, mensagem pastoral e cartazes em alta definição.",
+  "name": "Comunica! - Boletim Digital da Igreja",
+  "description": "Boletim Informativo Digital Comunica! para a IBCIP com avisos, programação dos cultos, mensagem pastoral e cartazes em alta definição.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

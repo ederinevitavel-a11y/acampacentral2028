@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { WeeklyBulletin, PublicTabType, EventCategory, ChurchEvent } from '../types';
 import { ImageLightboxModal } from './ImageLightboxModal';
+import { formatEventDisplayDate, formatEventFullSchedule } from '../utils/dateHelpers';
 
 interface PublicViewProps {
   bulletin: WeeklyBulletin;
@@ -85,7 +86,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
   // Share function
   const handleShareWhatsApp = (title: string, date: string, time: string) => {
     const text = encodeURIComponent(
-      `*${bulletin.churchName} - Boletim Comunhão!*\n\n📌 *${title}*\n📅 ${date} às ${time}\n\nConfira a programação completa no nosso boletim digital: ${window.location.href}`
+      `*${bulletin.churchName} - Boletim Comunica!*\n\n📌 *${title}*\n📅 ${date} às ${time}\n\nConfira a programação completa no nosso boletim digital: ${window.location.href}`
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
@@ -105,17 +106,13 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
               <Sparkles className="w-3.5 h-3.5" />
               <span>{bulletin.weekRange}</span>
             </div>
-
-            <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
-              Atualização Semanal
-            </span>
           </div>
 
           {/* Title & Slogan */}
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-2">
               <span>Boletim</span>
-              <span className="text-amber-400">Comunhão!</span>
+              <span className="text-amber-400">Comunica!</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
               Programação dos cultos, avisos e palavra pastoral da IBCIP
@@ -267,7 +264,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
                         <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-amber-300">
                           <span className="flex items-center gap-1 bg-slate-950/90 px-2.5 py-1 rounded-lg backdrop-blur-md border border-slate-800 shadow-md">
                             <Clock className="w-3 h-3 text-amber-400" />
-                            {highlightEvent.date} às {highlightEvent.time}
+                            {formatEventFullSchedule(highlightEvent)}
                           </span>
                           <span className="flex items-center gap-1 bg-slate-950/90 px-2.5 py-1 rounded-lg backdrop-blur-md border border-slate-800 shadow-md">
                             <MapPin className="w-3 h-3 text-amber-400" />
@@ -316,7 +313,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
                         onClick={() =>
                           handleShareWhatsApp(
                             highlightEvent.title,
-                            highlightEvent.date,
+                            formatEventDisplayDate(highlightEvent),
                             highlightEvent.time
                           )
                         }
@@ -425,7 +422,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
                             <div className="flex items-center gap-2 text-xs font-extrabold text-amber-300">
                               <span className="flex items-center gap-1 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 shadow-sm">
                                 <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                                {ev.date}
+                                {formatEventDisplayDate(ev)}
                               </span>
                               <span className="flex items-center gap-1 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 shadow-sm">
                                 <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -477,7 +474,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
                             </button>
 
                             <button
-                              onClick={() => handleShareWhatsApp(ev.title, ev.date, ev.time)}
+                              onClick={() => handleShareWhatsApp(ev.title, formatEventDisplayDate(ev), ev.time)}
                               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1 active:scale-95"
                             >
                               <Share2 className="w-3.5 h-3.5" />
@@ -700,7 +697,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
       {/* Footer Branding */}
       <footer className="mt-8 py-6 border-t border-slate-900 text-center text-xs text-slate-500 space-y-1 px-4">
         <p className="font-bold text-slate-400">
-          Comunhão! • {bulletin.churchName}
+          Comunica! • {bulletin.churchName}
         </p>
         <p className="text-[11px]">
           Acesse pelo QR Code no mural da igreja sem necessidade de instalação de aplicativo.

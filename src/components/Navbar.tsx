@@ -39,7 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-sm sm:text-lg tracking-tight text-white">
-                  Comunhão<span className="text-amber-400">!</span>
+                  Comunica<span className="text-amber-400">!</span>
                 </span>
                 <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 shadow-sm">
                   IBCIP

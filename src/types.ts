@@ -1,11 +1,12 @@
 export type BulletinStatus = 'Publicado' | 'Rascunho';
 
-export type EventCategory = 'Culto' | 'Jovens' | 'Infantil' | 'Casais' | 'Especial' | 'Aviso';
+export type EventCategory = 'Culto' | 'Jovens' | 'Adolescentes' | 'Infantil' | 'Casais' | 'Especial' | 'Evento' | 'Aviso';
 
 export interface ChurchEvent {
   id: string;
   title: string;
   category: EventCategory;
+  dayOfWeek?: string;
   date: string;
   time: string;
   location: string;
