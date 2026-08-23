@@ -112,7 +112,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white flex items-center gap-2">
               <span>Boletim</span>
-              <span className="text-amber-400">Comunica!</span>
+              <span className="text-amber-500">Comunica!</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
               Programação dos cultos, avisos e palavra pastoral da IBCIP
@@ -120,13 +120,13 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
           </div>
 
           {/* Theme Verse Card */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-3 shadow-inner">
-            <Quote className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 text-slate-300 flex items-start gap-3 shadow-inner">
+            <Quote className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+              <p className="text-xs sm:text-sm font-medium leading-relaxed">
                 "{bulletin.themeVerse}"
               </p>
-              <p className="text-[11px] font-bold text-amber-400 mt-1">
+              <p className="text-[11px] font-bold text-amber-500 mt-1">
                 {bulletin.themeVerseRef}
               </p>
             </div>
@@ -641,7 +641,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
             <div className="flex items-center justify-between px-1">
               <div>
                 <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
-                  <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                   <span>Mural de Avisos da Igreja</span>
                 </h2>
                 <p className="text-xs text-slate-400">Informativos gerais da semana na IBCIP</p>
@@ -656,7 +656,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
               {bulletin.notices.map((notice) => (
                 <div
                   key={notice.id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 sm:p-5 space-y-2.5 sm:space-y-3 transition-all shadow-md"
+                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 sm:p-5 space-y-2.5 sm:space-y-3 transition-all shadow-md text-slate-100"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-400 border border-slate-700">
@@ -664,12 +664,12 @@ export const PublicView: React.FC<PublicViewProps> = ({ bulletin }) => {
                     </span>
 
                     <span
-                      className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                      className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${
                         notice.importance === 'Alta'
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                           : notice.importance === 'Média'
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                          : 'bg-slate-800 text-slate-400'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                          : 'bg-slate-800 text-slate-400 border-slate-700'
                       }`}
                     >
                       Prioridade {notice.importance}

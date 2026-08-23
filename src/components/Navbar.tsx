@@ -1,5 +1,5 @@
 import React from 'react';
-import { Church, QrCode, ShieldCheck, LogOut, Eye, Settings } from 'lucide-react';
+import { Church, QrCode, ShieldCheck, LogOut, Eye } from 'lucide-react';
 import { WeeklyBulletin } from '../types';
 
 interface NavbarProps {
@@ -24,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   userEmail,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white shadow-xl">
+    <header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/95 border-b border-slate-800 text-white shadow-xl">
       <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
         <div className="flex items-center justify-between gap-2">
           
@@ -39,13 +39,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-sm sm:text-lg tracking-tight text-white">
-                  Comunica<span className="text-amber-400">!</span>
+                  Comunica<span className="text-amber-500">!</span>
                 </span>
                 <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 shadow-sm">
                   IBCIP
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium">
+              <p className="text-[10px] font-medium text-slate-400">
                 Boletim Semanal
               </p>
             </div>
@@ -61,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 : 'bg-amber-950/60 text-amber-300 border-amber-500/30'
             }`}>
               <span className={`w-2 h-2 rounded-full ${
-                bulletin.status === 'Publicado' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                bulletin.status === 'Publicado' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
               }`} />
               {bulletin.status}
             </div>
@@ -71,9 +71,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenQrModal}
                 title="Cartaz para Mural com QR Code"
-                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition-all active:scale-95 shadow-sm touch-manipulation"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold border bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border-slate-700 transition-all active:scale-95 shadow-sm touch-manipulation"
               >
-                <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+                <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
                 <span className="hidden sm:inline">Cartaz QR</span>
                 <span className="sm:hidden text-[11px]">QR</span>
               </button>
@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Admin Controls */}
             {isAdmin ? (
-              <div className="flex items-center gap-1 bg-slate-800/90 p-0.5 sm:p-1 rounded-xl border border-slate-700">
+              <div className="flex items-center gap-1 p-0.5 sm:p-1 rounded-xl border bg-slate-800/90 border-slate-700">
                 
                 {/* Switch Mode: Public vs Admin Panel */}
                 <button
@@ -112,8 +112,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Email Tag (Desktop only) */}
                 {userEmail && (
-                  <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 bg-slate-950/60 rounded-lg border border-slate-700/60 text-[11px] text-slate-300 font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-mono bg-slate-950/60 border-slate-700/60 text-slate-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                     <span className="max-w-[110px] truncate">{userEmail}</span>
                   </div>
                 )}
@@ -122,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={onLogoutAdmin}
                   title="Sair da Conta Admin"
-                  className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 rounded-lg transition-colors flex items-center touch-manipulation"
+                  className="p-1.5 rounded-lg transition-colors flex items-center touch-manipulation text-slate-400 hover:text-rose-400 hover:bg-slate-700/50"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WeeklyBulletin, AuthorizedUser } from './types';
 import { INITIAL_BULLETIN } from './data/mockData';
 import { Navbar } from './components/Navbar';
@@ -37,6 +37,7 @@ export default function App() {
 
   // View state
   const [viewMode, setViewMode] = useState<'public' | 'admin'>('public');
+
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     const saved = localStorage.getItem('ibcip_admin_session');
     return !!saved;
@@ -106,22 +107,29 @@ export default function App() {
     }
   };
 
-  // Handle bulletin updates (local state + Firestore push)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle bulletin updates (local state + debounced Firestore push)
   const handleUpdateBulletin = (updated: WeeklyBulletin | ((prev: WeeklyBulletin) => WeeklyBulletin)) => {
     setBulletin((prev) => {
       const nextBulletin = typeof updated === 'function' ? updated(prev) : updated;
       localStorage.setItem('comunica_bulletin_v2', JSON.stringify(nextBulletin));
       
-      // Save to Firebase Firestore
+      // Save to Firebase Firestore (debounced)
       setCloudSyncStatus('saving');
-      saveBulletinToFirestore(nextBulletin)
-        .then(() => {
-          setCloudSyncStatus('saved');
-        })
-        .catch((err) => {
-          console.warn('Erro ao salvar no Firestore:', err);
-          setCloudSyncStatus('error');
-        });
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        saveBulletinToFirestore(nextBulletin)
+          .then(() => {
+            setCloudSyncStatus('saved');
+          })
+          .catch((err) => {
+            console.warn('Erro ao salvar no Firestore:', err);
+            setCloudSyncStatus('error');
+          });
+      }, 1200);
 
       return nextBulletin;
     });

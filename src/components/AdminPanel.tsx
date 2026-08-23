@@ -418,6 +418,55 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     });
   };
 
+  // Save Notice
+  const handleSaveNotice = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNotice?.title) return;
+
+    if (editingNotice.id) {
+      // Update existing
+      onUpdateBulletin({
+        ...bulletin,
+        notices: bulletin.notices.map((n) =>
+          n.id === editingNotice.id
+            ? ({
+                ...n,
+                ...editingNotice,
+                importance: editingNotice.importance || 'Média',
+                category: editingNotice.category || 'Geral',
+              } as Notice)
+            : n
+        ),
+      });
+    } else {
+      // Add new
+      const newNotice: Notice = {
+        id: `notice-${Date.now()}`,
+        title: editingNotice.title || '',
+        category: editingNotice.category || 'Geral',
+        content: editingNotice.content || '',
+        importance: editingNotice.importance || 'Média',
+        date: editingNotice.date || 'Esta Semana',
+        contactName: editingNotice.contactName || '',
+      };
+      onUpdateBulletin({
+        ...bulletin,
+        notices: [newNotice, ...bulletin.notices],
+      });
+    }
+
+    setIsNoticeModalOpen(false);
+    setEditingNotice(null);
+  };
+
+  // Delete Notice
+  const handleDeleteNotice = (id: string) => {
+    onUpdateBulletin({
+      ...bulletin,
+      notices: bulletin.notices.filter((n) => n.id !== id),
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-24 sm:pb-20">
       
@@ -529,6 +578,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </button>
 
           <button
+            onClick={() => setAdminTab('avisos')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 touch-manipulation ${
+              adminTab === 'avisos'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+            }`}
+          >
+            <Bell className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Mural de Avisos ({bulletin.notices.length})</span>
+          </button>
+
+          <button
             onClick={() => setAdminTab('ai_upload')}
             className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 touch-manipulation ${
               adminTab === 'ai_upload'
@@ -557,6 +618,120 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       {/* Main Admin Content Container */}
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
+
+        {/* TAB 4: MURAL DE AVISOS */}
+        {adminTab === 'avisos' && (
+          <div className="space-y-6 animate-fadeIn max-w-4xl mx-auto">
+            <section className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 space-y-5 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-amber-400 shrink-0" />
+                    <span>Mural de Avisos da Igreja ({bulletin.notices.length})</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Gerencie os avisos, comunicados e informativos independentes da programação</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingNotice({
+                      title: '',
+                      category: 'Geral',
+                      content: '',
+                      importance: 'Média',
+                      date: 'Esta Semana',
+                      contactName: '',
+                    });
+                    setIsNoticeModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs transition-all shadow-md active:scale-95 touch-manipulation w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo Aviso</span>
+                </button>
+              </div>
+
+              {/* Guide box */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 text-xs text-amber-200/90 space-y-1">
+                <p className="font-bold text-amber-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>Gestão separada do Mural de Avisos:</span>
+                </p>
+                <p className="leading-relaxed">
+                  Aqui você pode criar, editar ou excluir comunicados rápidos, avisos ministeriais e notas pastorais que aparecem na aba "Avisos" para toda a igreja.
+                </p>
+              </div>
+
+              {/* Notice Cards List */}
+              <div className="space-y-3.5 pt-1">
+                {bulletin.notices.map((notice) => (
+                  <div
+                    key={notice.id}
+                    className="bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-md"
+                  >
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-900 text-amber-400 border border-slate-800">
+                          {notice.category}
+                        </span>
+                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                          notice.importance === 'Alta'
+                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            : notice.importance === 'Média'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        }`}>
+                          Prioridade: {notice.importance}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">
+                          • {notice.date}
+                        </span>
+                      </div>
+
+                      <h4 className="font-extrabold text-sm sm:text-base text-white">{notice.title}</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{notice.content}</p>
+                      {notice.contactName && (
+                        <p className="text-[11px] text-amber-300 font-medium">
+                          Contato: <span className="text-slate-300">{notice.contactName}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 sm:pt-0 sm:border-t-0 border-t border-slate-800 shrink-0 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingNotice({ ...notice });
+                          setIsNoticeModalOpen(true);
+                        }}
+                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 touch-manipulation active:scale-95"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Editar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteNotice(notice.id)}
+                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold transition-all touch-manipulation active:scale-95"
+                        title="Excluir aviso"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {bulletin.notices.length === 0 && (
+                  <div className="text-center py-12 text-slate-500 text-xs">
+                    Nenhum aviso cadastrado no mural atualmente.
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
 
         {/* TAB 3: QR CODE & DIVULGAÇÃO */}
         {adminTab === 'qrcode' && (
@@ -824,15 +999,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             </section>
 
-            {/* Events Manager Section */}
+            {/* Events / Programming Manager Section */}
             <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                     <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
-                    <span>Programação e Cultos da Semana ({bulletin.events.length})</span>
+                    <span>Programação e Cultos ({bulletin.events.length})</span>
                   </h3>
-                  <p className="text-xs text-slate-400">Adicione ou edite os eventos do boletim</p>
+                  <p className="text-xs text-slate-400">Adicione ou edite os cultos e eventos da semana</p>
                 </div>
 
                 <button
@@ -854,7 +1029,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs transition-all shadow-md active:scale-95 touch-manipulation w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Novo Evento</span>
+                  <span>Novo Evento / Culto</span>
                 </button>
               </div>
 
@@ -930,6 +1105,97 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* Notices Manager Section (Distinct Card) */}
+            <section className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                    <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
+                    <span>Mural de Avisos da Igreja ({bulletin.notices.length})</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Gerencie os comunicados e informativos gerais da semana</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingNotice({
+                      title: '',
+                      category: 'Geral',
+                      content: '',
+                      importance: 'Média',
+                      date: 'Esta Semana',
+                      contactName: '',
+                    });
+                    setIsNoticeModalOpen(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs transition-all shadow-md active:scale-95 touch-manipulation w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo Aviso</span>
+                </button>
+              </div>
+
+              {/* Notices List */}
+              <div className="space-y-3 pt-1">
+                {bulletin.notices.map((notice) => (
+                  <div
+                    key={notice.id}
+                    className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-md"
+                  >
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-900 text-amber-400 border border-slate-800">
+                          {notice.category}
+                        </span>
+                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                          notice.importance === 'Alta'
+                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            : notice.importance === 'Média'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        }`}>
+                          Prioridade: {notice.importance}
+                        </span>
+                        <span className="text-xs text-slate-400">• {notice.date}</span>
+                      </div>
+                      <h4 className="font-extrabold text-sm text-white">{notice.title}</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{notice.content}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800 shrink-0 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingNotice({ ...notice });
+                          setIsNoticeModalOpen(true);
+                        }}
+                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 touch-manipulation active:scale-95"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Editar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteNotice(notice.id)}
+                        className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold transition-all touch-manipulation active:scale-95"
+                        title="Excluir aviso"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {bulletin.notices.length === 0 && (
+                  <div className="text-center py-8 text-slate-500 text-xs">
+                    Nenhum aviso cadastrado no mural atualmente.
+                  </div>
+                )}
               </div>
             </section>
 
@@ -1737,6 +2003,124 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         date={lightboxState.date}
         time={lightboxState.time}
       />
+
+      {/* Notice Create / Edit Modal */}
+      {isNoticeModalOpen && editingNotice && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                <Bell className="w-5 h-5 text-amber-400" />
+                <span>{editingNotice.id ? 'Editar Aviso' : 'Novo Aviso para o Mural'}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsNoticeModalOpen(false)}
+                className="p-1 rounded-xl bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNotice} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Título do Aviso *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingNotice.title || ''}
+                  onChange={(e) => setEditingNotice({ ...editingNotice, title: e.target.value })}
+                  placeholder="Ex: Reunião de Oração nesta Quarta"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Departamento</label>
+                  <input
+                    type="text"
+                    value={editingNotice.category || 'Geral'}
+                    onChange={(e) => setEditingNotice({ ...editingNotice, category: e.target.value })}
+                    placeholder="Ex: Secretaria, Diaconia, Jovens..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Prioridade</label>
+                  <select
+                    value={editingNotice.importance || 'Média'}
+                    onChange={(e) =>
+                      setEditingNotice({
+                        ...editingNotice,
+                        importance: e.target.value as 'Baixa' | 'Média' | 'Alta',
+                      })
+                    }
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="Baixa">Baixa</option>
+                    <option value="Média">Média</option>
+                    <option value="Alta">Alta</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Data / Período</label>
+                  <input
+                    type="text"
+                    value={editingNotice.date || 'Esta Semana'}
+                    onChange={(e) => setEditingNotice({ ...editingNotice, date: e.target.value })}
+                    placeholder="Ex: Esta Semana, Domingo..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Contato / Responsável</label>
+                  <input
+                    type="text"
+                    value={editingNotice.contactName || ''}
+                    onChange={(e) => setEditingNotice({ ...editingNotice, contactName: e.target.value })}
+                    placeholder="Ex: Pr. João / Secretaria"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Conteúdo do Aviso *</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={editingNotice.content || ''}
+                  onChange={(e) => setEditingNotice({ ...editingNotice, content: e.target.value })}
+                  placeholder="Escreva os detalhes completos do aviso..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 leading-relaxed"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsNoticeModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-md transition-all active:scale-95"
+                >
+                  Salvar Aviso
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
